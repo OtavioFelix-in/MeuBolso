@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Meu Bolso",
+    "slug": "meu-bolso",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0E1116",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.otavio.meubolso"
+    },
+    "android": {
+      "package": "com.otavio.meubolso",
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "backgroundColor": "#00A870",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Meu Bolso usa suas fotos para anexar comprovantes aos lançamentos.",
+          "cameraPermission": "O Meu Bolso usa a câmera para fotografar comprovantes."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#00A870"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "O Meu Bolso usa a biometria pra proteger seus dados financeiros."
+        }
+      ]
+    ]
+  }
+}
