@@ -71,6 +71,8 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
     daily: db.getSetting('notif_daily', '0') === '1',
     invest: db.getSetting('notif_invest', '1') === '1',
     goals: db.getSetting('notif_goals', '1') === '1',
+    smart: db.getSetting('notif_smart', '0') === '1',
+    weekly: db.getSetting('notif_weekly', '1') === '1',
   };
 
   async function toggleNotif(key, value) {
@@ -331,6 +333,20 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
         hint="Todo dia 1º, pra guardar um pouquinho pra cada objetivo."
         value={notif.goals}
         onChange={(v) => toggleNotif('goals', v)}
+      />
+      <SwitchRow
+        emoji="🧠"
+        label="Alertas de gasto"
+        hint="Ritmo do mês acima do normal, gasto atípico ou cartão perto do limite. No máx. 3 por semana."
+        value={notif.smart}
+        onChange={(v) => toggleNotif('smart', v)}
+      />
+      <SwitchRow
+        emoji="📆"
+        label="Resumo semanal"
+        hint="Todo domingo às 20h, quanto você gastou na semana vs. sua média."
+        value={notif.weekly}
+        onChange={(v) => toggleNotif('weekly', v)}
       />
       <Button
         title="Reagendar lembretes agora"

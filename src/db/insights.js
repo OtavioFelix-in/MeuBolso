@@ -122,6 +122,24 @@ export function getSubscriptionsWeight(month) {
   return { fixed, income, percent: income > 0 ? (fixed / income) * 100 : 0 };
 }
 
+// ---- Resumo dos últimos 7 dias vs. média semanal (pro resumo semanal) ----
+
+export function getWeekSummary() {
+  const since = new Date();
+  since.setDate(since.getDate() - 6);
+  const sinceIso = since.toISOString().slice(0, 10);
+
+  const spent = sum(
+    `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM transactions
+     WHERE deleted = 0 AND off_budget = 0 AND kind = 'expense' AND paid = 1 AND date >= ?`,
+    [sinceIso]
+  );
+  const profile = getFinancialProfile(currentMonth(), 6);
+  const weeklyAverage = profile.avgExpense / 4.345;
+  const delta = weeklyAverage > 0 ? ((spent - weeklyAverage) / weeklyAverage) * 100 : 0;
+  return { spent, weeklyAverage: Math.round(weeklyAverage), delta };
+}
+
 // ---- Catálogo completo, pronto pra tela ----
 
 function insight(id, type, emoji, title, text, priority) {

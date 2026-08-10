@@ -128,15 +128,36 @@ Solução: **orçamento de disparo**.
 Tudo respeita os toggles que já existem em Ajustes › Notificações (e a gente
 adiciona toggles novos: "Resumo semanal", "Alertas de gasto").
 
+### Implementado em 2026-08-10 (`src/notifications/notifications.js`)
+
+- ✅ **Ritmo do mês estourando**, **gasto atípico** e **uso de cartão > 80%** —
+  unificados no toggle **"Alertas de gasto"** (`notif_smart`, default desligado).
+  Orçamento real: máx. 3/semana, gap de 48h, prioridade nessa ordem, log
+  persistido em `settings.notif_smart_log` (não é apagado pelo reagendamento
+  geral — só as notificações agendadas são canceladas/recriadas a cada abertura).
+- ✅ **Resumo semanal** — toggle **"Resumo semanal"** (`notif_weekly`, default
+  ligado), reagendado pro próximo domingo 20h a cada abertura do app, com o
+  número calculado na hora (`db.getWeekSummary`), não um trigger recorrente
+  "burro" do SO com conteúdo parado.
+- ⏭️ **Fatura do cartão fecha/vence** (data específica de vencimento) — não
+  implementado; o alerta de uso > 80% cobre o mesmo risco de forma mais simples,
+  sem precisar modelar o ciclo de fechamento/vencimento do cartão.
+- ⏭️ **Salário caiu** e **meta batida/quase** — não implementados. Metas nem têm
+  UI hoje (fora da tela desde a v5, conforme `PLANEJAMENTO.md`), e "salário caiu"
+  tem baixo valor por não ter engatilhador de UI ainda. Ficam pro backlog se
+  fizerem falta na prática.
+- ✅ **Faz N dias sem registrar** — já coberto pelo toggle existente "Lembrete
+  diário" (`notif_daily`); não duplicado.
+
 ---
 
 ## 5. Ordem de implementação (quando aprovar)
 
 1. ✅ **Motor** (`insights.js`) — implementado 2026-08-10 (`src/db/insights.js`).
 2. ✅ **Tela de Insights** (cards) — implementado 2026-08-10 (`ReportsScreen.js` + `TabBar.js`).
-3. **Notificações inteligentes** + orçamento de disparo — pendente.
+3. ✅ **Notificações inteligentes** + orçamento de disparo — implementado 2026-08-10 (escopo reduzido, ver seção 4).
 
-Dá pra parar depois do (2) e já ter valor real; o (3) vem por cima sem retrabalho.
+Sprint 3 completo.
 
 ---
 

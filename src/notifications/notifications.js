@@ -125,8 +125,99 @@ export async function refreshReminders() {
     );
     scheduled++;
   }
+  if (db.getSetting('notif_smart', '0') === '1') {
+    scheduled += await scheduleSmartAlerts();
+  }
+  if (db.getSetting('notif_weekly', '1') === '1') {
+    const id = await scheduleWeeklySummary();
+    if (id) scheduled++;
+  }
 
   return { scheduled, available: true };
+}
+
+// ---- Notificações inteligentes: orçamento de disparo ----
+// Regras (ver SPRINT3.md): no máx. 3 por semana, gap mínimo de 48h entre elas.
+// O log de envio fica em settings e NÃO é limpo pelo cancelamento geral de
+// refreshReminders (que só mexe nas notificações agendadas, não no histórico).
+
+const SMART_WEEKLY_LIMIT = 3;
+const SMART_GAP_MS = 48 * 60 * 60 * 1000;
+const SMART_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function getSmartLog() {
+  try {
+    const log = JSON.parse(db.getSetting('notif_smart_log', '[]'));
+    return Array.isArray(log) ? log.filter((t) => Date.now() - t < SMART_WEEK_MS) : [];
+  } catch {
+    return [];
+  }
+}
+
+function canSendSmart(log) {
+  if (log.length >= SMART_WEEKLY_LIMIT) return false;
+  const last = log[log.length - 1];
+  return !last || Date.now() - last >= SMART_GAP_MS;
+}
+
+function recordSmart(log) {
+  db.setSetting('notif_smart_log', JSON.stringify([...log, Date.now()]));
+}
+
+// Prioridade: ritmo estourando > gasto atípico > uso de cartão alto.
+// Cada refresh manda no máximo UM alerta inteligente (o de maior prioridade
+// disponível), respeitando o orçamento — evita virar parede de notificação.
+async function scheduleSmartAlerts() {
+  let log = getSmartLog();
+  if (!canSendSmart(log)) return 0;
+
+  const month = currentMonth();
+  const pace = db.getMonthPace(month);
+  const profile = db.getFinancialProfile(month, 6);
+  const topAnomaly = db.getAnomalies(month, 3)[0];
+  const hotCard = db.getCardsWithUsage(month).find((c) => c.usage_percent > 80);
+
+  let candidate = null;
+  if (pace.isCurrent && pace.dayNow >= 10 && profile.avgExpense > 0 && pace.projection > profile.avgExpense * 1.2) {
+    candidate = {
+      title: 'Ritmo do mês acima do normal 🔥',
+      body: `No ritmo atual, deve fechar em ${formatMoney(pace.projection)}, acima da sua média.`,
+    };
+  } else if (topAnomaly) {
+    candidate = {
+      title: 'Gasto fora do padrão 🚨',
+      body: `${formatMoney(topAnomaly.amount_cents)} em ${topAnomaly.category_name || 'uma categoria'} — bem acima do seu normal.`,
+    };
+  } else if (hotCard) {
+    candidate = {
+      title: 'Cartão perto do limite 💳',
+      body: `${hotCard.name} já usou ${hotCard.usage_percent.toFixed(0)}% do limite.`,
+    };
+  }
+
+  if (!candidate) return 0;
+
+  const when = new Date();
+  when.setMinutes(when.getMinutes() + 2, 0, 0);
+  const id = await scheduleAt(when, candidate.title, candidate.body);
+  if (id) recordSmart(log);
+  return id ? 1 : 0;
+}
+
+// Resumo semanal: sempre reagendado pro próximo domingo às 20h, com o número
+// calculado na hora (não é um trigger recorrente do SO, que teria conteúdo parado).
+async function scheduleWeeklySummary() {
+  const when = new Date();
+  when.setDate(when.getDate() + ((7 - when.getDay()) % 7 || 7));
+  when.setHours(20, 0, 0, 0);
+
+  const week = db.getWeekSummary();
+  const comparison =
+    week.weeklyAverage > 0
+      ? `${Math.abs(week.delta).toFixed(0)}% ${week.delta > 0 ? 'acima' : 'abaixo'} da sua média`
+      : 'ainda sem média pra comparar';
+
+  return scheduleAt(when, 'Resumo da semana 📆', `Você gastou ${formatMoney(week.spent)} — ${comparison}.`);
 }
 
 // Um lembrete por vencimento em aberto nos próximos 60 dias.
