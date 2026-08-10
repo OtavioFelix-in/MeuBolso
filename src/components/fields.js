@@ -44,7 +44,17 @@ function useBoxStyle() {
   );
 }
 
-export function TextField({ value, onChangeText, placeholder, multiline, keyboardType, autoFocus, maxLength }) {
+export function TextField({
+  value,
+  onChangeText,
+  placeholder,
+  multiline,
+  keyboardType,
+  autoFocus,
+  maxLength,
+  returnKeyType = 'done',
+  onSubmitEditing,
+}) {
   const { colors } = useTheme();
   const box = useBoxStyle();
   return (
@@ -58,7 +68,8 @@ export function TextField({ value, onChangeText, placeholder, multiline, keyboar
       keyboardType={keyboardType}
       autoFocus={autoFocus}
       maxLength={maxLength}
-      returnKeyType="done"
+      returnKeyType={returnKeyType}
+      onSubmitEditing={onSubmitEditing}
     />
   );
 }

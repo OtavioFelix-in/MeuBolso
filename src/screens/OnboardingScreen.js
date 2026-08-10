@@ -101,7 +101,15 @@ export default function OnboardingScreen({ onFinish }) {
 
           {step === NAME ? (
             <Panel title="Como podemos te chamar?" subtitle="Usamos só pra personalizar o app.">
-              <TextField value={name} onChangeText={setName} placeholder="Seu nome" autoFocus maxLength={40} />
+              <TextField
+                value={name}
+                onChangeText={setName}
+                placeholder="Seu nome"
+                autoFocus
+                maxLength={40}
+                returnKeyType="next"
+                onSubmitEditing={() => nameValid && advance()}
+              />
             </Panel>
           ) : null}
 
