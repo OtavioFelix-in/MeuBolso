@@ -171,11 +171,35 @@ notificação** (máx. N por semana, priorizado) e controle granular. Qualidade 
 ### 🥈 Sprint 2 — Configurações & Segurança
 *Um app financeiro sem trava e sem política de privacidade não entra na loja.*
 5. Tela de Configurações completa (acessibilidade, fonte, contraste).
-6. PIN/biometria.
+6. ~~PIN/biometria~~ — **já implementado** (`src/security/auth.js` + `LockScreen.js`,
+   via `expo-local-authentication`). Trocado pelos itens de segurança abaixo,
+   que são gaps reais confirmados em auditoria de código (2026-08-10):
+   - **Backup criptografado**: hoje `exportBackup` gera JSON em texto puro
+     (nome, saldo, todos os valores) e compartilha via `Sharing.shareAsync` sem
+     nenhuma proteção. Adicionar senha de backup (cifrar com `expo-crypto`
+     antes de exportar; pedir a senha para importar).
+   - **Notificação discreta**: notificações de conta/parcela hoje mostram valor
+     exato e descrição na tela de bloqueio do celular (`src/notifications/notifications.js`).
+     Adicionar toggle "notificação discreta" (título genérico, valor só dentro do app).
+   - **Apagar tudo com confirmação dupla**: `wipeAllData` hoje só tem um
+     `Alert.alert` simples (Cancelar/Apagar). Exigir digitar "APAGAR" ou
+     reautenticar com biometria antes de executar.
 7. Política de privacidade + termos + "apagar meus dados".
 
 ### 🥉 Sprint 3 — Insights locais + Notificações inteligentes
 *Diferencial de valor, sem depender de nuvem/IA — direto sobre os dados existentes.*
+
+> **Pré-requisito descoberto na auditoria**: hoje `categories` não tem eixo de
+> necessidade/desejo/futuro nem essencial/supérfluo, e `getNetWorth`/`getFinancialProfile`
+> (`src/db/reports.js`) não separam despesa essencial nem contam passivos (fatura de
+> cartão em aberto, parcelas futuras) — reserva de emergência e patrimônio líquido
+> saem otimistas. Antes de construir insights sobre esses números, considerar:
+> - adicionar 1 coluna em `categories` (ex. `essential INTEGER DEFAULT 0`) — migração
+>   pequena que corrige a reserva de emergência e alimenta o insight #9 (peso das
+>   contas fixas) com mais precisão;
+> - fazer `getNetWorth` subtrair passivos (fatura aberta + parcelas futuras) antes de
+>   qualquer insight que fale de patrimônio, senão o Sprint 3 herda um número errado.
+
 8. Motor de estatística local (médias, tendências, alertas por categoria).
 9. Notificações inteligentes com orçamento de disparo.
 10. Tela de "Insights".

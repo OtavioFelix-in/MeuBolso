@@ -5,6 +5,25 @@
 > **100% offline e local** (sem IA, sem nuvem), só estatística sobre os dados que
 > o usuário já registra.
 
+## Pré-requisitos descobertos em auditoria de código (2026-08-10)
+
+Antes de codar o motor, dois números que os insights vão citar estão incorretos hoje:
+
+- **Reserva de emergência otimista** (`getFinancialProfile`, `src/db/reports.js:226-251`):
+  `liquid = available + goals + investments` dividido por `avgExpense` **total** (não
+  só essencial), e trata 100% dos investimentos como líquidos, mesmo travados
+  (CDB com carência, previdência). Corrigir exige um eixo essencial/supérfluo em
+  `categories` (não existe hoje — só `emoji`/`color`/`kind`) e um campo de liquidez
+  em `investments`.
+- **Patrimônio líquido sem passivos** (`getNetWorth`, `src/db/reports.js:31-40`):
+  soma só `available + goals + investments + assets`. Fatura de cartão em aberto e
+  parcelas futuras não entram como dívida — o número sai maior do que é de verdade.
+
+Nenhum insight do catálogo abaixo (seção 3) deveria citar reserva de emergência ou
+patrimônio líquido antes dessas duas correções, sob risco de reforçar um número errado
+com a autoridade de um "insight". Os insights #1–#12 abaixo não dependem dessas
+correções (usam fluxo de caixa e médias de gasto, que já estão certos).
+
 ## Princípio que guia tudo: degradar com elegância
 
 Insight bom precisa de **histórico**. No 1º mês não existe "você gastou mais que a
