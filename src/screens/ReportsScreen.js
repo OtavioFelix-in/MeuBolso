@@ -40,7 +40,8 @@ export default function ReportsScreen() {
       contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
       showsVerticalScrollIndicator={false}
     >
-      <Header title="Relatórios" subtitle="Seus números, sem achismo" />
+      <Header title="Insights" subtitle="Seus números, sem achismo" />
+      <InsightsSection />
       <View style={{ marginTop: 14, gap: 10 }}>
         <Segmented options={VIEWS} value={view} onChange={setView} />
         {view !== 'profile' ? <MonthSwitcher /> : null}
@@ -50,6 +51,31 @@ export default function ReportsScreen() {
       {view === 'habits' ? <HabitsView /> : null}
       {view === 'profile' ? <ProfileView /> : null}
     </ScrollView>
+  );
+}
+
+// ---- Insights (topo da tela) ----
+
+const INSIGHT_COLOR = { alerta: 'expense', positivo: 'income', neutro: 'textMuted' };
+
+function InsightsSection() {
+  const { colors } = useTheme();
+  const { month, version } = useApp();
+  const insights = useMemo(() => db.buildInsights(month), [month, version]);
+
+  if (insights.length === 0) return null;
+
+  return (
+    <View style={{ marginTop: 16, gap: 10 }}>
+      {insights.map((item) => (
+        <Card key={item.id} style={{ borderLeftWidth: 3, borderLeftColor: colors[INSIGHT_COLOR[item.type]] }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
+            {item.emoji} {item.title}
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4, lineHeight: 18 }}>{item.text}</Text>
+        </Card>
+      ))}
+    </View>
   );
 }
 

@@ -11,5 +11,6 @@ export * from './events';
 export * from './budget';
 export * from './months';
 export * from './reports';
+export * from './insights';
 export * from './backup';
 export * from './onboarding';

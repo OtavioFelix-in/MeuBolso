@@ -10,7 +10,7 @@ export const TABS = [
   { key: 'expenses', emoji: '💸', label: 'Despesas' },
   { key: 'meses', emoji: '📆', label: 'Meses' },
   { key: 'wallet', emoji: '💼', label: 'Carteira' },
-  { key: 'reports', emoji: '📊', label: 'Relatórios' },
+  { key: 'reports', emoji: '💡', label: 'Insights' },
 ];
 
 export default function TabBar({ active, onChange }) {

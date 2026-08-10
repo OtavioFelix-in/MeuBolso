@@ -38,7 +38,7 @@ Níveis de maturidade dos dados:
 
 ---
 
-## 1. Onde fica — decisão de navegação (precisa do seu OK)
+## 1. Onde fica — decisão de navegação (RESOLVIDO em 2026-08-10: absorver Relatórios)
 
 Você escolheu **aba "Insights"**. Alerta de PM: hoje já são **5 abas**
 (Início · Despesas · Meses · Carteira · Relatórios). Uma 6ª aparta a barra e
@@ -132,9 +132,9 @@ adiciona toggles novos: "Resumo semanal", "Alertas de gasto").
 
 ## 5. Ordem de implementação (quando aprovar)
 
-1. **Motor** (`insights.js`) + testes de lógica — a fundação.
-2. **Tela de Insights** (cards) — entrega visual e testável.
-3. **Notificações inteligentes** + orçamento de disparo.
+1. ✅ **Motor** (`insights.js`) — implementado 2026-08-10 (`src/db/insights.js`).
+2. ✅ **Tela de Insights** (cards) — implementado 2026-08-10 (`ReportsScreen.js` + `TabBar.js`).
+3. **Notificações inteligentes** + orçamento de disparo — pendente.
 
 Dá pra parar depois do (2) e já ter valor real; o (3) vem por cima sem retrabalho.
 
@@ -142,7 +142,7 @@ Dá pra parar depois do (2) e já ter valor real; o (3) vem por cima sem retraba
 
 ## Decisões pendentes (pra fechar antes de codar)
 
-- [ ] **Navegação**: absorver Relatórios em "Insights" (recomendado) ou 6ª aba separada?
+- [x] **Navegação**: absorver Relatórios em "Insights" (recomendado). Implementado — `TabBar.js` e `ReportsScreen.js` (2026-08-10).
 - [ ] **Limiares**: os valores da tabela (30%, 20%, 80%…) estão de bom tamanho ou quer ajustar algum?
 - [ ] **Orçamento de notificação**: 3/semana + gap 48h está ok?
 - [ ] Algum insight que você quer **adicionar** ou **cortar** da lista?
