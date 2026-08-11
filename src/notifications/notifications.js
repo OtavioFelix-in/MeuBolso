@@ -197,9 +197,15 @@ async function scheduleSmartAlerts() {
 
   if (!candidate) return 0;
 
-  const when = new Date();
-  when.setMinutes(when.getMinutes() + 2, 0, 0);
-  const id = await scheduleAt(when, candidate.title, candidate.body);
+  // Dispara na hora (trigger: null), não daqui a alguns minutos: um refresh
+  // seguinte (ex.: depois de salvar um lançamento, que também chama
+  // refreshReminders) cancela tudo que ainda está pendente — se o alerta
+  // ainda não tivesse disparado, sumiria sem avisar, mas o orçamento já teria
+  // contado como enviado.
+  const id = await Notifications.scheduleNotificationAsync({
+    content: { title: candidate.title, body: candidate.body, sound: 'default' },
+    trigger: null,
+  });
   if (id) recordSmart(log);
   return id ? 1 : 0;
 }
@@ -208,8 +214,11 @@ async function scheduleSmartAlerts() {
 // calculado na hora (não é um trigger recorrente do SO, que teria conteúdo parado).
 async function scheduleWeeklySummary() {
   const when = new Date();
-  when.setDate(when.getDate() + ((7 - when.getDay()) % 7 || 7));
+  const daysUntilSunday = (7 - when.getDay()) % 7;
+  when.setDate(when.getDate() + daysUntilSunday);
   when.setHours(20, 0, 0, 0);
+  // Se hoje já é domingo e já passou das 20h, pula pro domingo seguinte.
+  if (when <= new Date()) when.setDate(when.getDate() + 7);
 
   const week = db.getWeekSummary();
   const comparison =
