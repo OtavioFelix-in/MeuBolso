@@ -68,21 +68,23 @@ export function createInstallment({
   const firstMonth = monthOf(firstDate);
   const day = Number(firstDate.slice(8, 10));
 
-  amounts.forEach((amount, i) => {
-    saveTransaction({
-      kind: 'expense',
-      amountCents: amount,
-      date: dueDateFor(addMonths(firstMonth, i), day),
-      categoryId,
-      accountId,
-      paymentMethod,
-      cardId,
-      description: `${description} (${i + 1}/${count})`,
-      paid: i < paidUntil ? 1 : 0,
-      offBudget,
-      installmentId: id,
-      installmentNo: i + 1,
-      installmentTotal: count,
+  db.withTransactionSync(() => {
+    amounts.forEach((amount, i) => {
+      saveTransaction({
+        kind: 'expense',
+        amountCents: amount,
+        date: dueDateFor(addMonths(firstMonth, i), day),
+        categoryId,
+        accountId,
+        paymentMethod,
+        cardId,
+        description: `${description} (${i + 1}/${count})`,
+        paid: i < paidUntil ? 1 : 0,
+        offBudget,
+        installmentId: id,
+        installmentNo: i + 1,
+        installmentTotal: count,
+      });
     });
   });
 
@@ -90,48 +92,52 @@ export function createInstallment({
 }
 
 export function updateInstallmentInfo({ id, description, categoryId, accountId, paymentMethod, offBudget = 0, note = null }) {
-  save('installments', id, {
-    description,
-    category_id: categoryId ?? null,
-    account_id: accountId ?? null,
-    payment_method: paymentMethod ?? null,
-    off_budget: offBudget ? 1 : 0,
-    note,
-  });
-  // Reflete o "incluir no saldo" em TODAS as parcelas (pagas e a pagar).
-  db.runSync('UPDATE transactions SET off_budget = ?, updated_at = ? WHERE installment_id = ? AND deleted = 0', [
-    offBudget ? 1 : 0,
-    nowIso(),
-    id,
-  ]);
-  // Só as parcelas em aberto acompanham a mudança; o que já foi pago fica como está.
-  const parcels = db.getAllSync(
-    'SELECT id, installment_no, installment_total FROM transactions WHERE installment_id = ? AND deleted = 0 AND paid = 0',
-    [id]
-  );
-  for (const parcel of parcels) {
-    db.runSync(
-      `UPDATE transactions
-       SET description = ?, category_id = ?, account_id = ?, payment_method = ?, updated_at = ?
-       WHERE id = ?`,
-      [
-        `${description} (${parcel.installment_no}/${parcel.installment_total})`,
-        categoryId ?? null,
-        accountId ?? null,
-        paymentMethod ?? null,
-        nowIso(),
-        parcel.id,
-      ]
+  db.withTransactionSync(() => {
+    save('installments', id, {
+      description,
+      category_id: categoryId ?? null,
+      account_id: accountId ?? null,
+      payment_method: paymentMethod ?? null,
+      off_budget: offBudget ? 1 : 0,
+      note,
+    });
+    // Reflete o "incluir no saldo" em TODAS as parcelas (pagas e a pagar).
+    db.runSync('UPDATE transactions SET off_budget = ?, updated_at = ? WHERE installment_id = ? AND deleted = 0', [
+      offBudget ? 1 : 0,
+      nowIso(),
+      id,
+    ]);
+    // Só as parcelas em aberto acompanham a mudança; o que já foi pago fica como está.
+    const parcels = db.getAllSync(
+      'SELECT id, installment_no, installment_total FROM transactions WHERE installment_id = ? AND deleted = 0 AND paid = 0',
+      [id]
     );
-  }
+    for (const parcel of parcels) {
+      db.runSync(
+        `UPDATE transactions
+         SET description = ?, category_id = ?, account_id = ?, payment_method = ?, updated_at = ?
+         WHERE id = ?`,
+        [
+          `${description} (${parcel.installment_no}/${parcel.installment_total})`,
+          categoryId ?? null,
+          accountId ?? null,
+          paymentMethod ?? null,
+          nowIso(),
+          parcel.id,
+        ]
+      );
+    }
+  });
 }
 
 export function deleteInstallment(id) {
-  softDelete('installments', id);
-  db.runSync('UPDATE transactions SET deleted = 1, updated_at = ? WHERE installment_id = ?', [
-    nowIso(),
-    id,
-  ]);
+  db.withTransactionSync(() => {
+    softDelete('installments', id);
+    db.runSync('UPDATE transactions SET deleted = 1, updated_at = ? WHERE installment_id = ?', [
+      nowIso(),
+      id,
+    ]);
+  });
 }
 
 // Total ainda devendo em parcelas e quanto pesa em cada um dos próximos meses.

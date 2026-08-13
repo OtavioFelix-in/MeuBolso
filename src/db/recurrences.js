@@ -132,35 +132,37 @@ export function materializeMonth(month) {
   );
 
   const created = [];
-  for (const rec of recs) {
-    // Recorrência anual só cai no mesmo mês do ano em que começou.
-    if (rec.period === 'annual') {
-      const annualMonth = (rec.start_month ?? month).slice(5, 7);
-      if (month.slice(5, 7) !== annualMonth) continue;
+  db.withTransactionSync(() => {
+    for (const rec of recs) {
+      // Recorrência anual só cai no mesmo mês do ano em que começou.
+      if (rec.period === 'annual') {
+        const annualMonth = (rec.start_month ?? month).slice(5, 7);
+        if (month.slice(5, 7) !== annualMonth) continue;
+      }
+
+      const exists = db.getFirstSync(
+        `SELECT id FROM transactions
+         WHERE deleted = 0 AND recurrence_id = ? AND substr(date, 1, 7) = ?`,
+        [rec.id, month]
+      );
+      if (exists) continue;
+
+      created.push(
+        saveTransaction({
+          kind: rec.kind,
+          amountCents: rec.amount_cents,
+          date: dueDateFor(month, rec.due_day),
+          categoryId: rec.category_id,
+          accountId: rec.account_id,
+          paymentMethod: rec.payment_method,
+          cardId: rec.card_id,
+          description: rec.name,
+          paid: 0,
+          recurrenceId: rec.id,
+        })
+      );
     }
-
-    const exists = db.getFirstSync(
-      `SELECT id FROM transactions
-       WHERE deleted = 0 AND recurrence_id = ? AND substr(date, 1, 7) = ?`,
-      [rec.id, month]
-    );
-    if (exists) continue;
-
-    created.push(
-      saveTransaction({
-        kind: rec.kind,
-        amountCents: rec.amount_cents,
-        date: dueDateFor(month, rec.due_day),
-        categoryId: rec.category_id,
-        accountId: rec.account_id,
-        paymentMethod: rec.payment_method,
-        cardId: rec.card_id,
-        description: rec.name,
-        paid: 0,
-        recurrenceId: rec.id,
-      })
-    );
-  }
+  });
   return created;
 }
 

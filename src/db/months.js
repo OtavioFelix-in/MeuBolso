@@ -32,12 +32,14 @@ export function materializeOpenMonths() {
 // fixas/salário) que ainda NÃO foram pagos. O que já foi pago e os lançamentos
 // manuais continuam salvos.
 export function closeMonth(month) {
-  db.runSync(
-    `UPDATE transactions SET deleted = 1, updated_at = ?
-     WHERE deleted = 0 AND recurrence_id IS NOT NULL AND paid = 0 AND substr(date, 1, 7) = ?`,
-    [nowIso(), month]
-  );
-  db.runSync('DELETE FROM open_months WHERE month = ?', [month]);
+  db.withTransactionSync(() => {
+    db.runSync(
+      `UPDATE transactions SET deleted = 1, updated_at = ?
+       WHERE deleted = 0 AND recurrence_id IS NOT NULL AND paid = 0 AND substr(date, 1, 7) = ?`,
+      [nowIso(), month]
+    );
+    db.runSync('DELETE FROM open_months WHERE month = ?', [month]);
+  });
 }
 
 // Se sobrou algo real no mês (pago ou lançamento manual), avisamos antes de fechar.
