@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 import * as db from '../db';
 import { ACCOUNT_TYPES, CHART_COLORS } from '../theme';
-import { EmojiColorField, Field, MoneyField, PickerField, TextField } from './fields';
+import { EmojiColorField, Field, MoneyField, PickerField, SwitchRow, TextField } from './fields';
 import { Button, Sheet } from './ui';
 
 const ACCOUNT_EMOJIS = ['🏦', '💵', '💳', '🐷', '🎟️', '📱', '💰', '🪙'];
@@ -110,19 +110,20 @@ export function AccountForm({ visible, onClose, onSaved, account }) {
 }
 
 export function CategoryForm({ visible, onClose, onSaved, category, kind, parent }) {
-  const [form, setForm] = useState({ name: '', emoji: '📦', color: CHART_COLORS[0] });
+  const [form, setForm] = useState({ name: '', emoji: '📦', color: CHART_COLORS[0], essential: false });
 
   useEffect(() => {
     if (!visible) return;
     setForm(
       category
-        ? { name: category.name, emoji: category.emoji, color: category.color }
-        : { name: '', emoji: parent?.emoji ?? '📦', color: parent?.color ?? CHART_COLORS[0] }
+        ? { name: category.name, emoji: category.emoji, color: category.color, essential: Boolean(category.essential) }
+        : { name: '', emoji: parent?.emoji ?? '📦', color: parent?.color ?? CHART_COLORS[0], essential: false }
     );
   }, [visible, category, parent]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const isSub = Boolean(parent) || Boolean(category?.parent_id);
+  const isExpense = (category?.kind ?? kind) === 'expense';
 
   function handleSave() {
     if (!form.name.trim()) {
@@ -136,6 +137,7 @@ export function CategoryForm({ visible, onClose, onSaved, category, kind, parent
       emoji: form.emoji || '📦',
       color: form.color,
       parentId: category?.parent_id ?? parent?.id ?? null,
+      essential: form.essential,
     });
     onSaved?.();
     onClose();
@@ -191,6 +193,16 @@ export function CategoryForm({ visible, onClose, onSaved, category, kind, parent
             colorOptions={CHART_COLORS}
           />
         </Field>
+      ) : null}
+
+      {!isSub && isExpense ? (
+        <SwitchRow
+          emoji="🧱"
+          label="Despesa essencial"
+          hint="Moradia, mercado, saúde... Usado pra calcular sua reserva de emergência e o peso das contas fixas na renda."
+          value={form.essential}
+          onChange={(v) => set({ essential: v })}
+        />
       ) : null}
     </Sheet>
   );

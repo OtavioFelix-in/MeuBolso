@@ -74,13 +74,14 @@ export function getCategory(id) {
   return db.getFirstSync('SELECT * FROM categories WHERE id = ?', [id]);
 }
 
-export function saveCategory({ id, name, kind, emoji, color, parentId = null }) {
+export function saveCategory({ id, name, kind, emoji, color, parentId = null, essential = 0 }) {
   return save('categories', id, {
     name,
     kind,
     emoji,
     color,
     parent_id: parentId,
+    essential: essential ? 1 : 0,
   });
 }
 

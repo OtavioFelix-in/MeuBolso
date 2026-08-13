@@ -84,11 +84,11 @@ export const ASSET_TYPES = [
 // Categorias iniciais. `subs` viram subcategorias (categoria com parent_id).
 export const DEFAULT_CATEGORIES = {
   expense: [
-    { name: 'Alimentação', emoji: '🍽️', color: '#E8940F', subs: ['Mercado', 'Restaurante', 'Delivery', 'Lanche'] },
-    { name: 'Transporte', emoji: '🚌', color: '#4C6FFF', subs: ['Combustível', 'App de corrida', 'Ônibus', 'Manutenção', 'Estacionamento'] },
-    { name: 'Moradia', emoji: '🏠', color: '#00B8D9', subs: ['Aluguel', 'Energia', 'Água', 'Internet', 'Gás', 'Condomínio'] },
-    { name: 'Educação', emoji: '🎓', color: '#7C5CFC', subs: ['Mensalidade', 'Material', 'Cursos', 'Livros'] },
-    { name: 'Saúde', emoji: '🩺', color: '#EC4899', subs: ['Farmácia', 'Consultas', 'Plano de saúde', 'Exames'] },
+    { name: 'Alimentação', emoji: '🍽️', color: '#E8940F', essential: true, subs: ['Mercado', 'Restaurante', 'Delivery', 'Lanche'] },
+    { name: 'Transporte', emoji: '🚌', color: '#4C6FFF', essential: true, subs: ['Combustível', 'App de corrida', 'Ônibus', 'Manutenção', 'Estacionamento'] },
+    { name: 'Moradia', emoji: '🏠', color: '#00B8D9', essential: true, subs: ['Aluguel', 'Energia', 'Água', 'Internet', 'Gás', 'Condomínio'] },
+    { name: 'Educação', emoji: '🎓', color: '#7C5CFC', essential: true, subs: ['Mensalidade', 'Material', 'Cursos', 'Livros'] },
+    { name: 'Saúde', emoji: '🩺', color: '#EC4899', essential: true, subs: ['Farmácia', 'Consultas', 'Plano de saúde', 'Exames'] },
     { name: 'Academia', emoji: '🏋️', color: '#84CC16', subs: ['Mensalidade', 'Suplementos'] },
     { name: 'Lazer', emoji: '🎮', color: '#F97316', subs: ['Cinema', 'Bar', 'Jogos', 'Eventos'] },
     { name: 'Compras', emoji: '🛍️', color: '#A855F7', subs: ['Roupas', 'Eletrônicos', 'Casa', 'Presentes'] },
@@ -97,7 +97,7 @@ export const DEFAULT_CATEGORIES = {
     { name: 'Família', emoji: '👨‍👩‍👧', color: '#0EA5E9', subs: ['Ajuda', 'Presentes'] },
     { name: 'Pets', emoji: '🐶', color: '#14B8A6', subs: ['Ração', 'Veterinário', 'Banho e tosa'] },
     { name: 'Viagens', emoji: '✈️', color: '#22C55E', subs: ['Passagens', 'Hospedagem', 'Passeios'] },
-    { name: 'Impostos e taxas', emoji: '🧾', color: '#697586', subs: ['Tarifas', 'IPVA', 'IPTU'] },
+    { name: 'Impostos e taxas', emoji: '🧾', color: '#697586', essential: true, subs: ['Tarifas', 'IPVA', 'IPTU'] },
     { name: 'Outros', emoji: '📦', color: '#697586', subs: [] },
   ],
   income: [

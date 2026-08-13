@@ -54,21 +54,21 @@ calcula (em `src/db/reports.js`) e 🔲 o que ainda não existe.
 | Indicador | Referência saudável | No app |
 |---|---|---|
 | Taxa de poupança | ≥ 20% da renda | ✅ `saving_rate`, `getFinancialProfile().savingRate` |
-| Reserva de emergência | 3 a 6 meses de **despesas essenciais** | ⚠️ existe (`emergencyMonths`) mas com ressalva — ver abaixo |
+| Reserva de emergência | 3 a 6 meses de **despesas essenciais** | ✅ `emergencyMonths` — corrigido em 2026-08-13 (ver abaixo) |
 | Comprometimento de renda com dívida | ≤ 30% da renda líquida | 🔲 dá para derivar de parcelas + fixas, não é exibido |
 | Custo fixo sobre a renda | ≤ 50% | 🔲 o app já separa fixas × variáveis em Despesas, falta o % |
 | Fluxo de caixa mensal | positivo | ✅ `cashFlow`, e o Início mostra o resultado do mês |
-| Patrimônio líquido | crescente ao longo do tempo | ✅ `getNetWorth`, `getNetWorthSeries` |
+| Patrimônio líquido | crescente ao longo do tempo | ✅ `getNetWorth`, `getNetWorthSeries` — já subtrai passivos |
 
-### Ressalvas nos cálculos atuais (relevantes de verdade)
+### Ressalvas nos cálculos (histórico — corrigidas em 2026-08-13)
 
-1. **Reserva de emergência está otimista.** Em `getFinancialProfile`, o cálculo é
+1. ✅ **Reserva de emergência estava otimista.** Em `getFinancialProfile`, o cálculo era
    `(saldo + metas + investimentos) / despesa média`. Dois problemas conceituais:
-   - usa **despesa total**, mas a definição correta é **despesa essencial** (sem lazer);
-   - trata **todo investimento como líquido**, mas um CDB de longo prazo ou um imóvel
+   - usava **despesa total**, mas a definição correta é **despesa essencial** (sem lazer);
+   - tratava **todo investimento como líquido**, mas um CDB de longo prazo ou um imóvel
      não é reserva de emergência. Reserva precisa ser de **liquidez imediata**.
-   Correção sugerida: marcar investimento como líquido/ilíquido e usar só despesas
-   essenciais no denominador.
+   Corrigido: `categories.essential` + `investments.liquid` + `getEssentialExpense()`,
+   usados em `getFinancialProfile().emergencyMonths`.
 
 2. **`saving_rate` mede sobra, não poupança.** A fórmula é `(receita − despesa) / receita`.
    Isso é a **sobra do mês**, que não é a mesma coisa que dinheiro guardado — o app já
@@ -80,14 +80,16 @@ calcula (em `src/db/reports.js`) e 🔲 o que ainda não existe.
    Está certo para planejar o mês, mas nunca use esse número como "dinheiro que tenho".
    Para caixa real, `getAvailableBalance()` (que filtra `paid = 1`) é o correto.
 
-4. **Cartão de crédito não vira dívida no saldo.** Gasto no crédito tem `card_id` e não
-   debita a conta — correto para o extrato, mas significa que o app **não mostra a
-   fatura como passivo**. Financeiramente, fatura em aberto é dívida de curto prazo e
-   deveria aparecer no patrimônio como valor negativo.
+4. ✅ **Cartão de crédito não virava dívida no saldo.** Gasto no crédito tem `card_id` e
+   não debita a conta — continua correto para o extrato, mas agora `getLiabilities()`
+   soma a fatura em aberto (`paid = 0`, `card_id` não nulo) como passivo.
 
-5. **`getNetWorth` não subtrai passivos.** Soma saldo + metas + investimentos + bens.
-   Patrimônio líquido de verdade é **ativos − dívidas** (parcelas em aberto + fatura).
-   Hoje o número é o bruto, e tende a parecer melhor do que é.
+5. ✅ **`getNetWorth` não subtraía passivos.** Corrigido: `getNetWorth()` devolve
+   `{ available, goals, investments, assets, liabilities, gross, total }`, com
+   `total = gross - liabilities` (fatura de cartão em aberto + parcelas futuras fora
+   do cartão). `gross` fica disponível pra quem precisar do bruto (ex.: composição
+   do patrimônio na tela de Relatórios, que usa `gross` como base e mostra a dívida
+   como uma linha própria).
 
 ## 3. Hierarquia de prioridades (o que orientar o usuário a fazer)
 
@@ -108,12 +110,14 @@ a dica — hoje as dicas não usam isso.
 
 Em ordem de valor por esforço:
 
-1. **Eixo necessidade/desejo/futuro nas categorias** → destrava 50/30/20, custo fixo
-   sobre renda e dicas personalizadas. Uma coluna nova em `categories`.
+1. 🟡 **Eixo necessidade/desejo/futuro nas categorias** → parcial: `categories.essential`
+   (binário essencial/supérfluo) existe desde 2026-08-13 e já destrava reserva de
+   emergência e peso das contas fixas. O eixo completo necessidade/desejo/**futuro**
+   (3 vias, pro 50/30/20 de verdade) ainda não existe.
 2. **Orçamento por categoria no mês** (planejado × realizado) → destrava envelopes e
    zero-based. Encaixa naturalmente no fluxo de "abrir o mês".
-3. **Fatura do cartão como passivo** → corrige patrimônio e comprometimento de renda.
-4. **Reserva de emergência corrigida** (essenciais + só o que é líquido).
+3. ✅ **Fatura do cartão como passivo** → `getLiabilities()`/`getNetWorth()`, 2026-08-13.
+4. ✅ **Reserva de emergência corrigida** (essenciais + só o que é líquido), 2026-08-13.
 5. **Degrau financeiro** → dica personalizada segundo a hierarquia acima.
 
 ## 5. Limite importante

@@ -28,6 +28,21 @@ export function getAvailableBalance() {
   return initial + movement - goals - invest;
 }
 
+// Dívidas de curto prazo que ainda não entram no saldo: fatura de cartão em
+// aberto (compras à vista ou parceladas no crédito, não pagas) e parcelas
+// futuras que não passam por cartão (fora do orçamento de quem comprou fiado).
+export function getLiabilities() {
+  const cardOpen = sum(
+    `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM transactions
+     WHERE deleted = 0 AND kind = 'expense' AND paid = 0 AND card_id IS NOT NULL`
+  );
+  const installmentsOpen = sum(
+    `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM transactions
+     WHERE deleted = 0 AND kind = 'expense' AND paid = 0 AND installment_id IS NOT NULL AND card_id IS NULL`
+  );
+  return { cardOpen, installmentsOpen, total: cardOpen + installmentsOpen };
+}
+
 export function getNetWorth() {
   const available = getAvailableBalance();
   const goals = sum(
@@ -36,7 +51,9 @@ export function getNetWorth() {
   );
   const investments = sum('SELECT COALESCE(SUM(current_cents), 0) AS total FROM investments WHERE deleted = 0');
   const assets = sum('SELECT COALESCE(SUM(value_cents), 0) AS total FROM assets WHERE deleted = 0');
-  return { available, goals, investments, assets, total: available + goals + investments + assets };
+  const liabilities = getLiabilities().total;
+  const gross = available + goals + investments + assets;
+  return { available, goals, investments, assets, liabilities, gross, total: gross - liabilities };
 }
 
 // ---- Resumo do mês ----
@@ -221,6 +238,34 @@ export function getCategorySeries(categoryId, endMonth, count = 6) {
   return months.map((month) => ({ month, total: map[month] ?? 0 }));
 }
 
+// Gasto essencial (categorias marcadas como tal) de um mês — usado na reserva
+// de emergência, que deve cobrir o básico, não o padrão de vida inteiro.
+export function getEssentialExpense(month) {
+  return sum(
+    `SELECT COALESCE(SUM(t.amount_cents), 0) AS total
+     FROM transactions t
+     LEFT JOIN categories c ON c.id = t.category_id
+     LEFT JOIN categories p ON p.id = c.parent_id
+     WHERE t.deleted = 0 AND t.off_budget = 0 AND t.kind = 'expense' AND substr(t.date, 1, 7) = ?
+       AND COALESCE(p.essential, c.essential, 0) = 1`,
+    [month]
+  );
+}
+
+// Comprometimento de renda com dívida: parcelas do mês (compras financiadas)
+// sobre a renda. Referência saudável: até 30%. Mais estrito que "custo fixo"
+// (que também soma aluguel, água, luz — obrigação, mas não dívida).
+export function getDebtCommitment(month) {
+  const income = getMonthSummary(month).income;
+  const installments = sum(
+    `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM transactions
+     WHERE deleted = 0 AND off_budget = 0 AND kind = 'expense' AND installment_id IS NOT NULL
+       AND substr(date, 1, 7) = ?`,
+    [month]
+  );
+  return { installments, income, percent: income > 0 ? (installments / income) * 100 : 0 };
+}
+
 // ---- Perfil financeiro ----
 
 export function getFinancialProfile(month, monthsBack = 6) {
@@ -231,22 +276,81 @@ export function getFinancialProfile(month, monthsBack = 6) {
   const avgIncome = withData.reduce((a, s) => a + s.income, 0) / n;
   const avgExpense = withData.reduce((a, s) => a + s.expense, 0) / n;
   const avgSaved = withData.reduce((a, s) => a + s.saved, 0) / n;
+  const avgEssentialExpense = withData.reduce((a, s) => a + getEssentialExpense(s.month), 0) / n;
 
   const worth = getNetWorth();
-  // Reserva de emergência: quantos meses de despesa média o dinheiro líquido cobre.
-  const liquid = worth.available + worth.goals + worth.investments;
-  const emergencyMonths = avgExpense > 0 ? liquid / avgExpense : 0;
+  const liquidInvestments = sum(
+    'SELECT COALESCE(SUM(current_cents), 0) AS total FROM investments WHERE deleted = 0 AND liquid = 1'
+  );
+  // Reserva de emergência: quantos meses de despesa ESSENCIAL o dinheiro de
+  // liquidez IMEDIATA cobre (investimento travado, como CDB com carência, não conta).
+  const liquid = worth.available + worth.goals + liquidInvestments;
+  const emergencyMonths = avgEssentialExpense > 0 ? liquid / avgEssentialExpense : 0;
 
   return {
     avgIncome: Math.round(avgIncome),
     avgExpense: Math.round(avgExpense),
     avgSaved: Math.round(avgSaved),
+    avgEssentialExpense: Math.round(avgEssentialExpense),
     savingRate: avgIncome > 0 ? ((avgIncome - avgExpense) / avgIncome) * 100 : 0,
     investedRate: worth.total > 0 ? (worth.investments / worth.total) * 100 : 0,
     emergencyMonths,
     cashFlow: Math.round(avgIncome - avgExpense),
     worth,
     monthsAnalyzed: withData.length,
+  };
+}
+
+// Em qual degrau da hierarquia financeira a pessoa está — pra dica de "próximo
+// passo" ser sobre o que MAIS importa agora, não uma lista genérica de dicas.
+// Ordem: sair do vermelho > reserva mínima > dívida cara > reserva completa >
+// investir > bens e consumo planejado. Função pura: quem chama já traz os dados.
+export function getFinancialStage({ cashFlow, emergencyMonths, investedRate, hasExpensiveDebt }) {
+  if (cashFlow < 0) {
+    return {
+      stage: 1,
+      emoji: '🆘',
+      title: 'Sair do vermelho',
+      text: 'Antes de qualquer outra coisa, ajuste o mês pra fechar no positivo — o resto espera.',
+    };
+  }
+  if (emergencyMonths < 1) {
+    return {
+      stage: 2,
+      emoji: '🧯',
+      title: 'Reserva mínima',
+      text: 'Guarde pelo menos 1 mês de despesas essenciais — é o que evita que um imprevisto vire dívida.',
+    };
+  }
+  if (hasExpensiveDebt) {
+    return {
+      stage: 3,
+      emoji: '🔥',
+      title: 'Quitar dívida cara',
+      text: 'Fatura de cartão perto do limite cobra juros que nenhum investimento paga. Priorize quitar antes de seguir.',
+    };
+  }
+  if (emergencyMonths < 6) {
+    return {
+      stage: 4,
+      emoji: '🛡️',
+      title: 'Completar a reserva',
+      text: 'Continue até chegar em 3 a 6 meses de despesas essenciais guardados.',
+    };
+  }
+  if (investedRate < 50) {
+    return {
+      stage: 5,
+      emoji: '📈',
+      title: 'Investir pra frente',
+      text: 'Reserva completa — direcione o que sobra pra objetivos de médio e longo prazo.',
+    };
+  }
+  return {
+    stage: 6,
+    emoji: '🎯',
+    title: 'Bem encaminhado',
+    text: 'Reserva completa e patrimônio investido. Bens e consumo planejado entram com equilíbrio agora.',
   };
 }
 

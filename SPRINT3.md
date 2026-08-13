@@ -7,22 +7,36 @@
 
 ## Pré-requisitos descobertos em auditoria de código (2026-08-10)
 
-Antes de codar o motor, dois números que os insights vão citar estão incorretos hoje:
+Antes de codar o motor, dois números que os insights vão citar estavam incorretos:
 
-- **Reserva de emergência otimista** (`getFinancialProfile`, `src/db/reports.js:226-251`):
+- **Reserva de emergência otimista** (`getFinancialProfile`, `src/db/reports.js`):
   `liquid = available + goals + investments` dividido por `avgExpense` **total** (não
-  só essencial), e trata 100% dos investimentos como líquidos, mesmo travados
-  (CDB com carência, previdência). Corrigir exige um eixo essencial/supérfluo em
-  `categories` (não existe hoje — só `emoji`/`color`/`kind`) e um campo de liquidez
-  em `investments`.
-- **Patrimônio líquido sem passivos** (`getNetWorth`, `src/db/reports.js:31-40`):
-  soma só `available + goals + investments + assets`. Fatura de cartão em aberto e
-  parcelas futuras não entram como dívida — o número sai maior do que é de verdade.
+  só essencial), e tratava 100% dos investimentos como líquidos, mesmo travados
+  (CDB com carência, previdência).
+- **Patrimônio líquido sem passivos** (`getNetWorth`, `src/db/reports.js`):
+  somava só `available + goals + investments + assets`. Fatura de cartão em aberto e
+  parcelas futuras não entravam como dívida — o número saía maior do que era de verdade.
 
-Nenhum insight do catálogo abaixo (seção 3) deveria citar reserva de emergência ou
-patrimônio líquido antes dessas duas correções, sob risco de reforçar um número errado
-com a autoridade de um "insight". Os insights #1–#12 abaixo não dependem dessas
-correções (usam fluxo de caixa e médias de gasto, que já estão certos).
+✅ **Corrigido em 2026-08-13:**
+- `categories.essential` (migração `addColumnIfMissing`) — eixo essencial/supérfluo,
+  marcado nas categorias padrão (Alimentação, Transporte, Moradia, Educação, Saúde,
+  Impostos e taxas) e editável em Ajustes › categoria (toggle "Despesa essencial",
+  só nas categorias-mãe de despesa).
+- `investments.liquid` (default 1) — toggle "Liquidez imediata" no formulário de
+  investimento; CDB com carência/previdência pode ser marcado como não-líquido.
+- `getEssentialExpense(month)` — soma só despesas de categorias essenciais.
+- `getLiabilities()` — fatura de cartão em aberto + parcelas futuras fora do cartão
+  (`paid = 0`), somadas.
+- `getNetWorth()` agora devolve `{ available, goals, investments, assets, liabilities,
+  gross, total }`, com `total = gross - liabilities`.
+- `getFinancialProfile().emergencyMonths` agora usa `avgEssentialExpense` no
+  denominador e só investimentos com `liquid = 1` no numerador.
+- Tela de Relatórios (Composição do patrimônio) ganhou a linha "Fatura e parcelas em
+  aberto" e os textos de reserva de emergência foram atualizados.
+
+Os insights #1–#12 (seção 3) não dependiam dessas correções (usam fluxo de caixa e
+médias de gasto, que já estavam certos) — mas agora, se algum insight futuro citar
+reserva de emergência ou patrimônio líquido, já parte de números corretos.
 
 ## Princípio que guia tudo: degradar com elegância
 

@@ -238,6 +238,8 @@ function runMigrations() {
   addColumnIfMissing('transactions', 'card_id', 'INTEGER');
   addColumnIfMissing('recurrences', 'period', "TEXT NOT NULL DEFAULT 'monthly'");
   addColumnIfMissing('recurrences', 'card_id', 'INTEGER');
+  addColumnIfMissing('categories', 'essential', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing('investments', 'liquid', 'INTEGER NOT NULL DEFAULT 1');
 }
 
 // Primeira abertura: cria as categorias e contas padrão. Se a pessoa apagar
@@ -254,6 +256,7 @@ function seedIfEmpty() {
         color: cat.color,
         position: i,
         parentId: null,
+        essential: cat.essential ? 1 : 0,
       });
       cat.subs.forEach((sub, j) => {
         insertCategory({
@@ -279,11 +282,11 @@ function seedIfEmpty() {
   setSetting('seeded', '1');
 }
 
-function insertCategory({ name, kind, emoji, color, position, parentId }) {
+function insertCategory({ name, kind, emoji, color, position, parentId, essential = 0 }) {
   const result = db.runSync(
-    `INSERT INTO categories (uuid, parent_id, name, kind, emoji, color, position, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [newUuid(), parentId, name, kind, emoji, color, position, nowIso()]
+    `INSERT INTO categories (uuid, parent_id, name, kind, emoji, color, position, essential, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [newUuid(), parentId, name, kind, emoji, color, position, essential, nowIso()]
   );
   return result.lastInsertRowId;
 }
@@ -297,9 +300,11 @@ export function wipeAllData() {
     'investment_moves', 'investments', 'assets', 'events', 'cards',
     'categories', 'accounts', 'open_months', 'settings',
   ];
-  for (const table of tables) {
-    db.runSync(`DELETE FROM ${table}`);
-  }
+  db.withTransactionSync(() => {
+    for (const table of tables) {
+      db.runSync(`DELETE FROM ${table}`);
+    }
+  });
   seedIfEmpty();
 }
 

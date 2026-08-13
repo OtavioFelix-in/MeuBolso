@@ -189,16 +189,11 @@ notificação** (máx. N por semana, priorizado) e controle granular. Qualidade 
 ### 🥉 Sprint 3 — Insights locais + Notificações inteligentes
 *Diferencial de valor, sem depender de nuvem/IA — direto sobre os dados existentes.*
 
-> **Pré-requisito descoberto na auditoria**: hoje `categories` não tem eixo de
-> necessidade/desejo/futuro nem essencial/supérfluo, e `getNetWorth`/`getFinancialProfile`
-> (`src/db/reports.js`) não separam despesa essencial nem contam passivos (fatura de
-> cartão em aberto, parcelas futuras) — reserva de emergência e patrimônio líquido
-> saem otimistas. Antes de construir insights sobre esses números, considerar:
-> - adicionar 1 coluna em `categories` (ex. `essential INTEGER DEFAULT 0`) — migração
->   pequena que corrige a reserva de emergência e alimenta o insight #9 (peso das
->   contas fixas) com mais precisão;
-> - fazer `getNetWorth` subtrair passivos (fatura aberta + parcelas futuras) antes de
->   qualquer insight que fale de patrimônio, senão o Sprint 3 herda um número errado.
+> **Pré-requisito descoberto na auditoria — corrigido em 2026-08-13**: `categories`
+> ganhou o eixo essencial/supérfluo (`essential`) e `investments` ganhou liquidez
+> (`liquid`); `getNetWorth` agora subtrai passivos (fatura de cartão aberta +
+> parcelas futuras) e `getFinancialProfile` usa despesa essencial + dinheiro líquido
+> na reserva de emergência. Ver `SPRINT3.md`.
 
 8. Motor de estatística local (médias, tendências, alertas por categoria).
 9. Notificações inteligentes com orçamento de disparo.

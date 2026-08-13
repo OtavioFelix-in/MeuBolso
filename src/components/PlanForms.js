@@ -8,7 +8,7 @@ import { ASSET_TYPES, CHART_COLORS, INVESTMENT_TYPES } from '../theme';
 import { useTheme } from '../theme-context';
 import { today } from '../utils/date';
 import { formatMoney } from '../utils/money';
-import { DateField, EmojiColorField, Field, MoneyField, PickerField, TextField } from './fields';
+import { DateField, EmojiColorField, Field, MoneyField, PickerField, SwitchRow, TextField } from './fields';
 import { Button, Sheet } from './ui';
 
 const GOAL_EMOJIS = ['🎯', '🚗', '🏠', '💻', '✈️', '🛟', '💍', '🎓', '📱', '🏖️', '🏍️', '🎁'];
@@ -115,7 +115,7 @@ export function GoalForm({ visible, onClose, onSaved, goal }) {
 // ---- Investimentos ----
 
 export function InvestmentForm({ visible, onClose, onSaved, investment }) {
-  const [form, setForm] = useState({ name: '', type: 'cdb', color: CHART_COLORS[1], currentCents: 0, targetCents: 0, note: '' });
+  const [form, setForm] = useState({ name: '', type: 'cdb', color: CHART_COLORS[1], currentCents: 0, targetCents: 0, note: '', liquid: true });
 
   useEffect(() => {
     if (!visible) return;
@@ -128,8 +128,9 @@ export function InvestmentForm({ visible, onClose, onSaved, investment }) {
             currentCents: investment.current_cents,
             targetCents: investment.target_cents,
             note: investment.note ?? '',
+            liquid: Boolean(investment.liquid),
           }
-        : { name: '', type: 'cdb', color: CHART_COLORS[1], currentCents: 0, targetCents: 0, note: '' }
+        : { name: '', type: 'cdb', color: CHART_COLORS[1], currentCents: 0, targetCents: 0, note: '', liquid: true }
     );
   }, [visible, investment]);
 
@@ -148,6 +149,7 @@ export function InvestmentForm({ visible, onClose, onSaved, investment }) {
       currentCents: form.currentCents,
       targetCents: form.targetCents,
       note: form.note.trim(),
+      liquid: form.liquid,
     });
     onSaved?.();
     onClose();
@@ -218,6 +220,14 @@ export function InvestmentForm({ visible, onClose, onSaved, investment }) {
       <Field label="Observações">
         <TextField value={form.note} onChangeText={(t) => set({ note: t })} placeholder="Vencimento, taxa, corretora..." multiline />
       </Field>
+
+      <SwitchRow
+        emoji="💧"
+        label="Liquidez imediata"
+        hint="Desligue para investimentos com carência (CDB travado, previdência) — eles não entram na sua reserva de emergência."
+        value={form.liquid}
+        onChange={(v) => set({ liquid: v })}
+      />
     </Sheet>
   );
 }

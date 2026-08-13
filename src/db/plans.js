@@ -141,7 +141,7 @@ export function getInvestments() {
   }));
 }
 
-export function saveInvestment({ id, name, type, color, currentCents, targetCents, note }) {
+export function saveInvestment({ id, name, type, color, currentCents, targetCents, note, liquid = 1 }) {
   return save('investments', id, {
     name,
     type,
@@ -149,6 +149,7 @@ export function saveInvestment({ id, name, type, color, currentCents, targetCent
     current_cents: currentCents,
     target_cents: targetCents ?? 0,
     note: note ?? null,
+    liquid: liquid ? 1 : 0,
   });
 }
 
