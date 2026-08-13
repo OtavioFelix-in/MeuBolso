@@ -1,215 +1,103 @@
-# Planejamento — Meu Bolso: de app pessoal a produto
+# Planejamento — Front-end do Meu Bolso
 
-> Documento de planejamento. **Nada aqui está implementado ainda** — é o roadmap
-> acordado para transformar o Meu Bolso num app de controle financeiro
-> profissional, mantendo a filosofia **offline-first (nuvem opcional)**.
->
-> Decisões-base já tomadas:
-> - **Filosofia:** offline-first de verdade. Nuvem (backup) e IA são recursos
->   *opcionais* que o usuário liga se quiser. O app funciona 100% sem internet.
-> - **IA (Gemini):** por enquanto **só planejamento** — não implementar nesta fase.
-> - Este arquivo é a fonte de verdade do roadmap; evolui conforme a gente decide.
+> O planejamento anterior (onboarding, segurança, Sprint 3 de insights, nuvem/IA)
+> está **concluído ou pausado por decisão do Otávio** — não é o foco agora.
+> Este documento é focado **só em front-end**: como o app parece e se comporta
+> visualmente, não em funcionalidade nova. Não mexe em `src/db/*` nem adiciona
+> tela/relatório novo — só como as telas existentes são desenhadas.
 
----
+## 0. Diagnóstico — por que o app "parece feito por IA"
 
-## 0. Diagnóstico do estado atual
+Levantamento no código (2026-08-13), não opinião solta:
 
-A base é sólida e já tem nível profissional em vários pontos:
+1. **100% dos ícones são emoji**, sem exceção — `theme.js` (`ACCOUNT_TYPES`,
+   `PAYMENT_METHODS`, `INVESTMENT_TYPES`, `ASSET_TYPES`, categorias) e toda tela usam
+   `emoji` como prop. Não há `@expo/vector-icons` nem nenhuma lib de ícone vetorial
+   no projeto — `grep` por `vector-icons` no `src/` não retorna nada. Emoji renderiza
+   diferente por fonte do sistema (Android/iOS/versão), varia de peso e estilo entre
+   si (💼 é ilustrado, 🏦 é plano) e é o tell mais reconhecível de "protótipo rápido".
+   `IconBubble` (`src/components/ui.js:217`) põe esse emoji dentro de um círculo colorido
+   translúcido — o padrão exato que se vê em templates de fintech gerados às pressas.
+2. **Zero fonte customizada.** Nenhum `expo-font`/`useFonts` no projeto — todo texto
+   usa a fonte padrão do sistema (Roboto no Android, San Francisco no iOS). Funciona,
+   mas não constrói identidade nenhuma; qualquer app React Native "cru" parece igual.
+3. **Splash screen configurada pela metade.** Existe `assets/splash-icon.png`, mas
+   `app.json` não tem a chave `"splash"` nem usa `expo-splash-screen` — o asset foi
+   gerado e nunca ligado. Hoje a abertura do app é a tela branca/preta padrão do Expo.
+4. **Zero microinteração.** Nenhum `Animated`, `Reanimated` ou `Moti` no projeto —
+   troca de aba, abertura de sheet e salvar um lançamento são instantâneos e secos.
+   Não há *skeleton loading*, nem feedback de "salvo com sucesso" além de o sheet fechar.
+5. **Escala de espaçamento/raio não é um sistema, é número solto por componente.**
+   `Card` usa `borderRadius: 20` (`ui.js:25`); botões, chips e barras usam 14, 12, 11,
+   8 e 3 em arquivos diferentes, sem constante compartilhada. Não trava a UI, mas
+   cada tela nova reinventa o próprio raio "por olho".
+6. **Paleta de cor é o ponto mais forte hoje** — `palettes.light`/`palettes.dark`
+   em `theme.js` são consistentes, o verde de marca (`#00A870`/`#2ED396`) é usado com
+   disciplina, e o dark mode foi pensado (não é só inverter branco/preto). Isso não
+   precisa mudar — é a base pra construir em cima.
 
-- Banco separado por domínio (`src/db/*`), dinheiro sempre em centavos, tema
-  claro/escuro, e `uuid`/`updated_at`/`deleted` em todas as tabelas (já preparado
-  para uma futura sincronização).
-- **Backup local já existe**: `exportBackup`/`importBackup` (JSON) e `exportSpreadsheet`
-  (CSV) na tela de Ajustes. O "passar para outro celular" já está parcialmente
-  resolvido offline — falta só a camada de nuvem opcional.
+## 1. Onde focar (ordem de impacto por esforço)
 
-Os "tells" de app pessoal são poucos e explícitos (fáceis de remover):
+### 🥇 Ícones — trocar emoji por ícone vetorial
+Maior impacto visual pelo menor esforço técnico: `@expo/vector-icons` já vem
+embutido no pacote `expo` (SDK 57), **sem instalar dependência nova**. Trocar por
+uma família consistente (ex.: `Feather` ou `Ionicons`, ambas na lib) resolve de
+uma vez a inconsistência de peso/estilo.
 
-- Aba **Namorada** (`NamoradaScreen`) e categoria **"Namorada"** com subs pessoais.
-- Categoria **"Faculdade"** hardcoded em `DEFAULT_CATEGORIES`.
-- Textos com piada interna (ex.: *"Feito pra durar mais que a força de vontade de janeiro"*).
+**Mas atenção a uma distinção real do produto**: emoji em duas situações NÃO são
+"ícone de UI" — são **conteúdo escolhido pelo usuário** (o emoji da categoria/conta
+que a pessoa seleciona no `EmojiColorField`) e trocar isso tira uma feature, não só
+um estilo. Separar os dois casos:
+- **Ícone de UI/navegação/estado** (abas, botões, cabeçalhos, estados vazios,
+  emoji fixo de `ACCOUNT_TYPES`/`PAYMENT_METHODS`/`INVESTMENT_TYPES`/`ASSET_TYPES`
+  em `theme.js`) → candidato a virar ícone vetorial.
+- **Emoji de categoria/conta escolhido pelo usuário** (`CATEGORY_EMOJIS`,
+  `ACCOUNT_EMOJIS` em `CatalogForms.js`) → é personalização, faz parte do produto,
+  não precisa mudar.
 
----
+### 🥈 Tipografia
+Adicionar 1–2 fontes via `expo-font`/Google Fonts (ex.: uma pro título/números
+grandes tipo `Sora`/`Manrope`/`Plus Jakarta Sans`, e manter a do sistema pro corpo
+de texto — ou uma família só, com pesos variados). Baixo esforço técnico (é só
+`useFonts` + trocar `fontFamily` nos componentes de `ui.js`/`fields.js`), alto
+ganho de identidade — é o que faz o app "ter uma cara" em vez de "ser um React
+Native padrão".
 
-## 1. Onboarding (primeiro acesso)
+### 🥉 Splash screen
+Ligar o `assets/splash-icon.png` que já existe via `expo-splash-screen` +
+`"splash"` em `app.json`. Esforço pequeno, e hoje é literalmente um asset pronto
+sendo desperdiçado.
 
-**Princípio:** pedir o mínimo para o app fazer sentido na primeira tela; empurrar o
-resto para depois. Onboarding longo é onde apps perdem usuário.
+### Sistema de espaçamento/raio
+Formalizar em `theme.js` uma escala compartilhada (ex.: `RADIUS = { sm: 8, md: 14,
+lg: 20 }`, `SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 }`) e migrar os
+componentes de `ui.js`/`fields.js` pra usar as constantes em vez de número solto.
+Não muda nada visualmente no primeiro momento — é a base pra parar de divergir
+tela a tela.
 
-### Manter (núcleo)
-- Nome do usuário → alimenta a saudação personalizada ("Bom dia, João").
-- Saldo atual da conta.
-- Tem renda fixa mensal? → cadastro do salário inicial (valor + dia).
+### Microinterações (por último — é polimento, não fundação)
+Sem dependência nova: a própria API `Animated` do React Native já cobre fade-in de
+card, feedback de "salvo" e transição de aba. `Reanimated`/`Moti` só entrariam se
+o resultado com `Animated` nativo não for suficiente — decisão pra revisitar depois
+de ver o antes/depois.
 
-### Adicionar (faltou e importa)
-- **Perfil de categorias** (ex.: Estudante / CLT / Autônomo / Família) que ajusta o
-  preset de categorias — melhor que fazer o usuário marcar 16 checkboxes.
-- **Dia de fechamento/vencimento do cartão** (o modelo já tem cartões; sem isso a
-  fatura fica errada).
-- **Permissão de notificação** pedida *com contexto* ("quer que eu te lembre das
-  contas?"), nunca o popup seco do Android.
-- **Moeda/locale** preparado no código (mesmo lançando só BRL) para não travar
-  internacionalização no futuro.
-- Tela final "Tudo pronto, {nome}!" com resumo do que foi configurado.
+## 2. O que NÃO mexer
 
-### Cortar / mudar (análise crítica)
-- ❌ **Bloqueio de palavrões/nomes ofensivos:** cortar. É o nome do próprio usuário,
-  no app dele, que só ele vê — não protege ninguém e gera falso-positivo (bloquear
-  nomes reais). Validar apenas vazio/comprimento.
-- 🟡 **Escolher categorias uma a uma:** simplificar. Trazer tudo pronto; personalizar
-  fica nas Configurações. No máximo perguntar o *perfil* acima.
-- 🟡 **Registrar meses anteriores no onboarding:** adiar. Padrão = "começar limpo";
-  oferecer importar histórico depois.
+- **Navegação manual em `App.js`** — continua sendo a decisão certa pro tamanho do
+  app; nada aqui troca isso por lib de navegação.
+- **Nenhuma tela, cálculo ou tabela nova.** Este plano é só a camada visual dos
+  componentes que já existem (`src/components/ui.js`, `fields.js`, `charts.js`,
+  `theme.js`) — as telas continuam chamando os mesmos componentes, só que
+  redesenhados por dentro.
+- **Paleta de cor atual** — funciona bem em claro/escuro, não é o problema.
 
-### Requisito técnico
-- Onboarding **retomável e idempotente**: se fechar no meio, volta de onde parou.
-  Guardar `onboarding_step` em `settings`.
+## 3. Pendências de decisão
 
----
-
-## 2. Tutorial inicial
-
-**Princípio:** tutorial *just-in-time* (contextual) supera carrossel *upfront* — que
-todo mundo pula.
-
-- **Empty states que ensinam:** Início vazio mostra "Toque no + pra registrar seu
-  primeiro gasto". O app se explica sendo usado.
-- No máximo **3 dicas contextuais** (tooltips) na primeira visita a cada aba, e somem.
-- Card explicando o conceito **mês ABERTO × FECHADO** — é o mais original do app e o
-  menos óbvio; merece um mini-explicativo.
-
----
-
-## 3. Configurações completas
-
-Reorganizar em grupos:
-
-- **Conta & Perfil:** nome, saudação, moeda, editar salário.
-- **Aparência:** tema (já existe), tamanho da fonte, cor de destaque.
-- **Acessibilidade:** tamanho da fonte, alto contraste, reduzir animações, labels
-  para leitor de tela.
-- **Notificações:** as atuais + as inteligentes (seção 6).
-- **Dados & Backup:** exportar (já existe) + **backup em nuvem (opcional)** + importar
-  + **apagar todos os dados** (exigido pelas lojas).
-- **Segurança:** PIN/biometria para abrir o app (é dado financeiro — importante).
-- **Sobre:** versão, créditos, dev, **política de privacidade**, **termos de uso**,
-  avaliar na loja, contato/suporte.
-- **Extras profissionais:** idioma, "restaurar padrões", changelog/novidades e —
-  quando houver nuvem/IA — painel de **controle de privacidade** (o que sai do aparelho).
-
----
-
-## 4. Tirar a aparência de app pessoal
-
-Ordenado por impacto × esforço:
-
-1. **Remover/generalizar a aba e a categoria "Namorada"** (tell #1).
-2. Categorias hardcoded pessoais ("Faculdade") → dirigidas pelo perfil do onboarding.
-3. Textos com piada interna → tom acolhedor, porém neutro.
-4. **Empty states, loading e erros humanos** (hoje há `Alert` cru): produto trata,
-   app pessoal não.
-5. Identidade visual: splash screen, tela "Sobre" decente, logo/nome consistentes
-   (ícone já existe).
-6. Microinterações: feedback ao salvar, transição de abas.
-
-**Não mexer:** a navegação manual em `App.js` é rápida e funcional — não trocar por
-biblioteca de navegação só por trocar; não é isso que dá cara de pessoal.
-
----
-
-## 5. Inteligência Artificial (Gemini) — SÓ PLANEJAMENTO nesta fase
-
-Registrado para o futuro. Dois problemas que precisam de decisão **antes** de codar:
-
-- **A chave não pode morar no app:** chave do Gemini dentro do APK é extraível →
-  abuso/custo no nome do dono. IA em escala exige **backend** que segura a chave.
-- **Privacidade × offline:** mandar gastos ao Gemini = enviar dado financeiro ao
-  Google. Exige **consentimento explícito** e, idealmente, enviar apenas **resumos
-  agregados** (não a lista crua de transações).
-
-**Arquitetura recomendada — separar "insights" de "IA":**
-- Grande parte das ideias (gastou acima da média, categoria subiu X%, padrões) é
-  **estatística local**: offline, grátis, instantânea, privada. → Ver seção 6/Sprint 3.
-- Reservar o Gemini para o que só ele faz bem: **narrar** esses números em linguagem
-  natural e responder perguntas abertas. A IA *narra* insights que o app já calculou.
-
-**Ideias válidas para o futuro:** categorização automática por texto ("iFood" →
-Delivery), coach que responde perguntas, detectar assinatura esquecida.
-**Linha vermelha:** nada de conselho de investimento personalizado (área regulada).
-
----
-
-## 6. Notificações inteligentes (locais)
-
-Quase tudo é computável com os dados locais — barato e valioso, sem IA nem nuvem:
-
-- Gastou acima da média / perto do limite do orçamento.
-- Conta vence amanhã; conta variável (água/luz) ainda não lançada perto do vencimento.
-- Cartão: fatura fechou / vence em 3 dias / uso passou de 80% do limite.
-- Salário caiu (dia do pagamento).
-- Meta quase concluída / aporte sugerido.
-- Resumo semanal/mensal ("essa semana: R$ 340, -15% vs. média").
-- "Faz X dias sem registrar nada" (engajamento sem ser chato).
-
-**Crítica:** notificação demais → usuário desliga tudo. Implementar **orçamento de
-notificação** (máx. N por semana, priorizado) e controle granular. Qualidade > quantidade.
-
----
-
-## 7. Roadmap por sprints
-
-> Discordância registrada: **não** tratar como um único sprint — vira um mês sem
-> nada testável. Quebrado por "maior impacto na percepção com menor esforço".
-
-### 🥇 Sprint 1 — "Deixar de ser meu app"
-*Maior impacto na percepção, mais barato, sem backend/IA/nuvem.*
-1. Remover/generalizar tudo que é pessoal (Namorada, textos, categorias por perfil).
-2. Onboarding enxuto (nome, saldo, renda, perfil, notificação) + retomável.
-3. Empty states, tratamento de erro humano, revisão de tom dos textos.
-4. Tutorial contextual (coachmarks + card do "mês aberto/fechado").
-
-### 🥈 Sprint 2 — Configurações & Segurança
-*Um app financeiro sem trava e sem política de privacidade não entra na loja.*
-5. Tela de Configurações completa (acessibilidade, fonte, contraste).
-6. ~~PIN/biometria~~ — **já implementado** (`src/security/auth.js` + `LockScreen.js`,
-   via `expo-local-authentication`). Trocado pelos itens de segurança abaixo,
-   que são gaps reais confirmados em auditoria de código (2026-08-10):
-   - **Backup criptografado**: hoje `exportBackup` gera JSON em texto puro
-     (nome, saldo, todos os valores) e compartilha via `Sharing.shareAsync` sem
-     nenhuma proteção. Adicionar senha de backup (cifrar com `expo-crypto`
-     antes de exportar; pedir a senha para importar).
-   - **Notificação discreta**: notificações de conta/parcela hoje mostram valor
-     exato e descrição na tela de bloqueio do celular (`src/notifications/notifications.js`).
-     Adicionar toggle "notificação discreta" (título genérico, valor só dentro do app).
-   - **Apagar tudo com confirmação dupla**: `wipeAllData` hoje só tem um
-     `Alert.alert` simples (Cancelar/Apagar). Exigir digitar "APAGAR" ou
-     reautenticar com biometria antes de executar.
-7. Política de privacidade + termos + "apagar meus dados".
-
-### 🥉 Sprint 3 — Insights locais + Notificações inteligentes
-*Diferencial de valor, sem depender de nuvem/IA — direto sobre os dados existentes.*
-
-> **Pré-requisito descoberto na auditoria — corrigido em 2026-08-13**: `categories`
-> ganhou o eixo essencial/supérfluo (`essential`) e `investments` ganhou liquidez
-> (`liquid`); `getNetWorth` agora subtrai passivos (fatura de cartão aberta +
-> parcelas futuras) e `getFinancialProfile` usa despesa essencial + dinheiro líquido
-> na reserva de emergência. Ver `SPRINT3.md`.
-
-8. Motor de estatística local (médias, tendências, alertas por categoria).
-9. Notificações inteligentes com orçamento de disparo.
-10. Tela de "Insights".
-
-### Sprint 4+ — Nuvem, IA e produto (decisão de negócio antes)
-*Exige backend, custo e decisão sobre virar produto de verdade.*
-11. Backup em nuvem opcional (Firebase — Storage + login Google).
-12. IA Gemini via backend, narrando os insights do Sprint 3.
-13. Monetização, publicação nas lojas, integração bancária (Open Finance/Pluggy).
-
----
-
-## Anexo — Pendências de decisão
-
-- [ ] Nome/marca definitivos e identidade visual (logo, splash).
-- [ ] Onde hospedar o backend quando chegar a fase de nuvem/IA (Firebase free, etc.).
-- [ ] Modelo de monetização (grátis, assinatura, freemium).
-- [ ] Escopo de internacionalização no lançamento (só BRL/pt-BR?).
+- [ ] **Ícone vetorial**: `Feather` (mais fino/minimalista) ou `Ionicons` (mais
+  cheio/amigável)? Ajuda ver os dois lado a lado nas telas reais antes de decidir.
+- [ ] **Fonte**: nome/estilo de referência (alguma fonte de app que você gosta?)
+  ou eu sugiro 2-3 opções pra comparar.
+- [ ] **Nível de animação**: só o básico (fade/slide nativo) ou vale investir em algo
+  mais chamativo (ex.: número contando, gráfico animando ao abrir a aba)?
+- [ ] **Ordem de execução**: seguir a ordem de impacto acima (ícones → fonte →
+  splash → sistema de espaçamento → microinteração) ou priorizar diferente?
