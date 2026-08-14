@@ -2,8 +2,8 @@
 // abrir (informando o salário daquele mês), fechar e editar o salário — tudo à
 // mão, sem ficar escondido em outra tela.
 
-import { useMemo, useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { Alert, FlatList, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useApp } from '../app-context';
 import * as db from '../db';
 import { useTheme } from '../theme-context';
@@ -16,10 +16,14 @@ import { Badge, Button, Card, EmptyState, Header, Muted, SectionTitle } from '..
 export default function MesesScreen() {
   const { colors } = useTheme();
   const { version, refresh, setMonth, navigate } = useApp();
+  const { width } = useWindowDimensions();
   const [tick, setTick] = useState(0);
   const [opening, setOpening] = useState(null);
   const [editingSalary, setEditingSalary] = useState(null);
   const [showPast, setShowPast] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const listRef = useRef(null);
+  const cardWidth = width - 40; // 20 de padding de cada lado da tela
 
   const { timeline, salary } = useMemo(
     () => ({ timeline: db.getMonthsTimeline({ before: showPast ? 6 : 0, after: 9 }), salary: db.getSalary() }),
@@ -64,43 +68,87 @@ export default function MesesScreen() {
 
       <SectionTitle
         action={showPast ? 'ocultar anteriores' : 'ver anteriores'}
-        onAction={() => setShowPast((v) => !v)}
+        onAction={() => {
+          const next = !showPast;
+          setShowPast(next);
+          // Ao mostrar meses anteriores, o mês atual deixa de ser o primeiro
+          // card (getMonthsTimeline põe 6 meses antes dele) — pula direto pra
+          // ele em vez de deixar o carrossel exibindo o passado.
+          const targetIndex = next ? 6 : 0;
+          requestAnimationFrame(() => {
+            listRef.current?.scrollToOffset({ offset: targetIndex * (cardWidth + 12), animated: false });
+            setActiveIndex(targetIndex);
+          });
+        }}
       >
         Linha do tempo
       </SectionTitle>
-      {timeline.map((m) => (
-        <Card key={m.month} style={{ marginBottom: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{monthLabel(m.month, { full: true })}</Text>
-              <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                {m.isCurrent ? <Badge label="mês atual" color={colors.primary} /> : null}
-                <Badge label={m.open ? 'aberto' : 'previsto'} color={m.open ? colors.income : colors.textMuted} />
+      <Muted size={12} style={{ marginBottom: 10 }}>
+        Deslize pro lado pra ver os outros meses.
+      </Muted>
+
+      <FlatList
+        ref={listRef}
+        data={timeline}
+        keyExtractor={(m) => m.month}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={cardWidth + 12}
+        decelerationRate="fast"
+        contentContainerStyle={{ gap: 12 }}
+        onMomentumScrollEnd={(e) => {
+          setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / (cardWidth + 12)));
+        }}
+        renderItem={({ item: m }) => (
+          <Card style={{ width: cardWidth }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{monthLabel(m.month, { full: true })}</Text>
+                <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                  {m.isCurrent ? <Badge label="mês atual" color={colors.primary} /> : null}
+                  <Badge label={m.open ? 'aberto' : 'previsto'} color={m.open ? colors.income : colors.textMuted} />
+                </View>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontSize: 11, color: colors.textMuted }}>{m.open ? 'resultado' : 'previsto'}</Text>
+                <Text style={{ fontSize: 17, fontWeight: '800', color: m.leftover >= 0 ? colors.income : colors.expense }}>{formatMoney(m.leftover)}</Text>
               </View>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 11, color: colors.textMuted }}>{m.open ? 'resultado' : 'previsto'}</Text>
-              <Text style={{ fontSize: 17, fontWeight: '800', color: m.leftover >= 0 ? colors.income : colors.expense }}>{formatMoney(m.leftover)}</Text>
-            </View>
-          </View>
 
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-            <Mini label="Salário" value={m.salary_cents} color={colors.income} />
-            <Mini label="Contas fixas" value={m.bills_cents} color={colors.expense} />
-            {m.installments_cents > 0 ? <Mini label="Parcelas" value={m.installments_cents} color={colors.textMuted} /> : null}
-          </View>
-
-          {m.open ? (
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-              <Button title="Ir pro mês" variant="soft" style={{ flex: 1 }} onPress={() => goToMonth(m.month)} />
-              <Button title="Salário" variant="ghost" onPress={() => setEditingSalary({ month: m.month, cents: m.salary_cents })} />
-              <Button title="Fechar" variant="ghost" onPress={() => confirmClose(m.month)} />
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+              <Mini label="Salário" value={m.salary_cents} color={colors.income} />
+              <Mini label="Contas fixas" value={m.bills_cents} color={colors.expense} />
+              {m.installments_cents > 0 ? <Mini label="Parcelas" value={m.installments_cents} color={colors.textMuted} /> : null}
             </View>
-          ) : (
-            <Button title={`Abrir ${monthLabel(m.month)}`} icon="🔓" variant="soft" onPress={() => setOpening({ month: m.month, cents: salary.cents })} style={{ marginTop: 14 }} />
-          )}
-        </Card>
-      ))}
+
+            {m.open ? (
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+                <Button title="Ir pro mês" variant="soft" style={{ flex: 1 }} onPress={() => goToMonth(m.month)} />
+                <Button title="Salário" variant="ghost" onPress={() => setEditingSalary({ month: m.month, cents: m.salary_cents })} />
+                <Button title="Fechar" variant="ghost" onPress={() => confirmClose(m.month)} />
+              </View>
+            ) : (
+              <Button title={`Abrir ${monthLabel(m.month)}`} icon="🔓" variant="soft" onPress={() => setOpening({ month: m.month, cents: salary.cents })} style={{ marginTop: 14 }} />
+            )}
+          </Card>
+        )}
+      />
+
+      {/* Bolinhas indicando a posição no carrossel */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 12 }}>
+        {timeline.map((m, i) => (
+          <View
+            key={m.month}
+            style={{
+              width: i === activeIndex ? 16 : 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: i === activeIndex ? colors.primary : colors.border,
+            }}
+          />
+        ))}
+      </View>
 
       {/* Abrir mês informando o salário */}
       <SalarySheet

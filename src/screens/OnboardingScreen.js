@@ -2,7 +2,7 @@
 // fixa → notificações → pronto. Cada passo grava na hora e o passo atual fica
 // salvo, então é retomável se o app fechar no meio.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Rect } from 'react-native-svg';
@@ -32,9 +32,19 @@ export default function OnboardingScreen({ onFinish }) {
   const [salary, setSalary] = useState(0);
   const [salaryDay, setSalaryDay] = useState(5);
   const [lockAvailable, setLockAvailable] = useState(false);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     canUseLock().then(setLockAvailable);
+  }, []);
+
+  // Garante que o campo e o botão "Continuar" fiquem visíveis quando o
+  // teclado abre, mesmo se o conteúdo não couber inteiro na tela reduzida.
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => sub.remove();
   }, []);
 
   const firstName = name.trim().split(/\s+/)[0] || '';
@@ -73,11 +83,15 @@ export default function OnboardingScreen({ onFinish }) {
   }
 
   const nameValid = name.trim().length >= 2;
+  // Passos com teclado ficam alinhados no topo: centralizar empurrava o campo
+  // e o botão "Continuar" pra trás do teclado no Android (tela ficava cortada).
+  const hasKeyboard = step === NAME || step === BALANCE || (step === SALARY && hasSalary);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
+          ref={scrollRef}
           style={{ flex: 1 }}
           contentContainerStyle={{ flexGrow: 1, padding: 24 }}
           keyboardShouldPersistTaps="always"
@@ -90,7 +104,7 @@ export default function OnboardingScreen({ onFinish }) {
             </View>
           ) : null}
 
-          <View style={{ flex: 1, justifyContent: 'center' }}>
+          <View style={{ flex: 1, justifyContent: hasKeyboard ? 'flex-start' : 'center', paddingTop: hasKeyboard ? 12 : 0 }}>
           {step === WELCOME ? (
             <Hero
               icon={<WalletIcon size={54} />}
@@ -119,7 +133,14 @@ export default function OnboardingScreen({ onFinish }) {
               title={firstName ? `Quanto você tem hoje, ${firstName}?` : 'Quanto você tem hoje?'}
               subtitle="O saldo atual da sua conta. Pode deixar em branco e ajustar depois."
             >
-              <MoneyField cents={balance} onChange={setBalance} autoFocus color={colors.primary} />
+              <MoneyField
+                cents={balance}
+                onChange={setBalance}
+                autoFocus
+                color={colors.primary}
+                returnKeyType="next"
+                onSubmitEditing={advance}
+              />
             </Panel>
           ) : null}
 
@@ -132,7 +153,14 @@ export default function OnboardingScreen({ onFinish }) {
               {hasSalary ? (
                 <>
                   <Text style={styles(colors).fieldLabel}>Valor do salário</Text>
-                  <MoneyField cents={salary} onChange={setSalary} color={colors.income} />
+                  <MoneyField
+                    cents={salary}
+                    onChange={setSalary}
+                    color={colors.income}
+                    autoFocus
+                    returnKeyType="done"
+                    onSubmitEditing={() => salary > 0 && advance()}
+                  />
                   <Text style={[styles(colors).fieldLabel, { marginTop: 16 }]}>Cai todo dia</Text>
                   <StepperField value={salaryDay} onChange={setSalaryDay} min={1} max={31} suffix="do mês" />
                 </>

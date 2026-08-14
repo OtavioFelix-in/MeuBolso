@@ -42,8 +42,6 @@ export default function DashboardScreen({ onOpenSettings }) {
       upcoming: db.getUpcoming(`${month}-31`).slice(0, 4),
       incomes: db.getTransactions({ month, kind: 'income' }),
       investments: db.getInvestmentsTotal(),
-      installments: db.getInstallmentForecast(month, 6),
-      bills: db.getRecurrencesForMonth(month, 'expense').filter((r) => r.in_month),
     });
   }, [month, version]);
 
@@ -69,9 +67,8 @@ export default function DashboardScreen({ onOpenSettings }) {
 
   if (!data) return null;
 
-  const { open, projection, summary, worth, breakdown, series, worthSeries, upcoming, incomes, investments, installments, bills } = data;
+  const { open, projection, summary, worth, breakdown, series, worthSeries, upcoming, incomes, investments } = data;
   const donutData = breakdown.map((c) => ({ name: c.name, value: c.total_cents, color: c.color, emoji: c.emoji }));
-  const billsPaid = bills.filter((b) => b.is_paid).length;
 
   const headerRight = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -130,11 +127,6 @@ export default function DashboardScreen({ onOpenSettings }) {
           onClose={() => setOpeningSalary(false)}
           onConfirm={(cents) => { db.openMonth(month); db.setMonthSalary(month, cents); refresh(); }}
         />
-
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
-          <ShortcutCard emoji="🧾" label="Contas fixas" hint="ver e cadastrar" onPress={() => navigate('bills')} />
-          <ShortcutCard emoji="💳" label="Parcelas" hint={installments.parcels > 0 ? `faltam ${formatMoney(installments.total_cents)}` : 'nenhuma aberta'} onPress={() => navigate('installments')} />
-        </View>
       </ScrollView>
     );
   }
@@ -203,37 +195,14 @@ export default function DashboardScreen({ onOpenSettings }) {
         </View>
       </Card>
 
-      {/* Atalhos pras áreas */}
+      {/* Agenda: único atalho que fica aqui, porque não tem outro caminho até ela
+          (Contas fixas e Parcelas já ficam em Despesas › Fixas; Carteira e Meses
+          já são abas da barra inferior — repetir aqui só duplicava). */}
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
-        <ShortcutCard
-          emoji="🧾"
-          label="Contas fixas"
-          hint={bills.length > 0 ? `${billsPaid}/${bills.length} pagas` : 'cadastre as suas'}
-          onPress={() => navigate('bills')}
-        />
-        <ShortcutCard
-          emoji="💳"
-          label="Parcelas"
-          hint={installments.parcels > 0 ? `faltam ${formatMoney(installments.total_cents)}` : 'nenhuma aberta'}
-          onPress={() => navigate('installments')}
-        />
-      </View>
-      <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-        <ShortcutCard
-          emoji="💼"
-          label="Carteira"
-          hint={mask(formatMoney(investments.current + worth.assets))}
-          onPress={() => navigate('wallet')}
-          tint={colors.invest}
-        />
-      </View>
-
-      <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-        <ShortcutCard emoji="📆" label="Meses" hint="abrir, fechar, salário" onPress={() => navigate('meses')} tint={colors.warning} />
         <ShortcutCard emoji="📅" label="Agenda" hint="eventos planejados" onPress={() => navigate('agenda')} tint={colors.income} />
       </View>
 
-      {/* Receitas do mês (inclui o salário fixo) */}
+      {/* Receitas do mês */}
       <SectionTitle action="+ receita" onAction={() => openTransaction(null, 'income')}>
         Receitas do mês
       </SectionTitle>
@@ -242,9 +211,9 @@ export default function DashboardScreen({ onOpenSettings }) {
           <EmptyState
             emoji="📥"
             title="Nenhuma receita neste mês"
-            subtitle="Configure seu salário nos ajustes pra ele entrar automático, ou toque em + receita."
-            action="Configurar salário"
-            onAction={onOpenSettings}
+            subtitle="Configure seu salário na Carteira pra ele entrar automático, ou toque em + receita."
+            action="Ir pra Carteira"
+            onAction={() => navigate('wallet')}
           />
         ) : (
           incomes.map((tx, i) => (

@@ -12,6 +12,7 @@ import { useTheme } from '../theme-context';
 import { dueLabel, formatDateLong, monthLabel, today } from '../utils/date';
 import { formatMoney } from '../utils/money';
 import { DonutChart, DonutLegend } from '../components/charts';
+import CategoryManager from '../components/CategoryManager';
 import { ChipRow } from '../components/fields';
 import MonthSwitcher from '../components/MonthSwitcher';
 import SalarySheet from '../components/SalarySheet';
@@ -144,6 +145,8 @@ function AllTab({ breakdown, donutData, summary, days, categories, categoryId, s
           </Card>
         </>
       ) : null}
+
+      <CategoryManager kind="expense" title="Categorias de despesa" />
 
       <SectionTitle>Lançamentos</SectionTitle>
       <View style={{ marginBottom: 4 }}>

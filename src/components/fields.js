@@ -75,7 +75,7 @@ export function TextField({
 }
 
 // Campo de valor estilo caixa de mercado: só dígitos, entrando pela direita.
-export function MoneyField({ cents, onChange, autoFocus, color, big = true }) {
+export function MoneyField({ cents, onChange, autoFocus, color, big = true, returnKeyType, onSubmitEditing }) {
   const { colors } = useTheme();
   const [digits, setDigits] = useState(() => centsToDigits(cents));
   const tint = color ?? colors.text;
@@ -122,6 +122,8 @@ export function MoneyField({ cents, onChange, autoFocus, color, big = true }) {
         keyboardType="number-pad"
         autoFocus={autoFocus}
         selectTextOnFocus={false}
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
       />
     </View>
   );

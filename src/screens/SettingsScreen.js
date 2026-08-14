@@ -9,8 +9,7 @@ import { authenticate, canUseLock, isLockEnabled, setLockEnabled } from '../secu
 import { FONT_SCALES, MODE_EMOJI, MODE_LABEL, useTheme } from '../theme-context';
 import { exportBackup, exportSpreadsheet, importBackup } from '../utils/backup';
 import { formatMoney } from '../utils/money';
-import { AccountForm, CategoryForm } from '../components/CatalogForms';
-import { LegalSheet, ProfileSheet, SalarySheet } from '../components/SettingsSheets';
+import { LegalSheet, ProfileSheet } from '../components/SettingsSheets';
 import { SwitchRow } from '../components/fields';
 import {
   Button,
@@ -31,12 +30,7 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
   const [tick, setTick] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
   const [legal, setLegal] = useState(null); // null | 'privacy' | 'terms'
-  const [accountForm, setAccountForm] = useState({ open: false, account: null });
-  const [categoryForm, setCategoryForm] = useState({ open: false, category: null, parent: null, kind: 'expense' });
-  const [categoryKind, setCategoryKind] = useState('expense');
-  const [expanded, setExpanded] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [salaryOpen, setSalaryOpen] = useState(false);
   const [lockOn, setLockOn] = useState(() => isLockEnabled());
   const [lockAvailable, setLockAvailable] = useState(false);
 
@@ -56,15 +50,10 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
     }
   }
 
-  const salary = useMemo(() => (visible ? db.getSalary() : { configured: false, cents: 0, day: 5 }), [visible, tick]);
-
   const reload = () => {
     setTick((t) => t + 1);
     refresh();
   };
-
-  const accounts = useMemo(() => (visible ? db.getAccountsWithBalance() : []), [visible, tick]);
-  const categories = useMemo(() => (visible ? db.getCategoryTree(categoryKind) : []), [visible, categoryKind, tick]);
 
   const notif = {
     bills: db.getSetting('notif_bills', '1') === '1',
@@ -185,116 +174,19 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
 
       <Button title="Restaurar aparência padrão" variant="ghost" style={{ marginTop: 12 }} onPress={resetAppearance} />
 
-      <SectionTitle>Renda fixa mensal</SectionTitle>
-      <Card onPress={() => setSalaryOpen(true)}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconBubble emoji="💼" color={colors.income} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
-              {salary.configured && salary.cents > 0 ? `Salário: ${formatMoney(salary.cents)}` : 'Configurar salário'}
-            </Text>
-            <Muted size={12}>
-              {salary.configured && salary.cents > 0
-                ? `Entra todo dia ${salary.day} automaticamente. Edite um mês específico lá no Início.`
-                : 'Entra automático todo mês. Se um mês for diferente, você edita só aquele no Início.'}
-            </Muted>
-          </View>
-          <Text style={{ color: colors.primary, fontWeight: '700' }}>{salary.configured ? 'editar' : 'definir'}</Text>
-        </View>
+      <Card style={{ marginTop: 12 }}>
+        <Muted size={12}>
+          💼 Renda fixa (salário) e as contas correntes/carteira agora ficam na aba{' '}
+          <Text style={{ fontWeight: '700', color: colors.text }}>Carteira</Text>, junto com investimentos e cartões.
+        </Muted>
       </Card>
 
-      <SectionTitle action="+ nova" onAction={() => setAccountForm({ open: true, account: null })}>
-        Contas
-      </SectionTitle>
-      <Card>
-        {accounts.map((account, i) => (
-          <View key={account.id}>
-            {i > 0 ? <Divider /> : null}
-            <Pressable
-              onPress={() => setAccountForm({ open: true, account })}
-              style={({ pressed }) => [
-                { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
-                pressed && { opacity: 0.6 },
-              ]}
-            >
-              <IconBubble emoji={account.emoji} color={account.color} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{account.name}</Text>
-                <Muted size={12}>saldo inicial de {formatMoney(account.initial_cents)}</Muted>
-              </View>
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: '700',
-                  color: account.balance_cents >= 0 ? colors.text : colors.expense,
-                }}
-              >
-                {formatMoney(account.balance_cents)}
-              </Text>
-            </Pressable>
-          </View>
-        ))}
-      </Card>
-
-      <SectionTitle action="+ nova" onAction={() => setCategoryForm({ open: true, category: null, parent: null, kind: categoryKind })}>
-        Categorias
-      </SectionTitle>
-      <View style={{ marginBottom: 12 }}>
-        <Segmented
-          options={[
-            { key: 'expense', label: 'Despesas' },
-            { key: 'income', label: 'Receitas' },
-          ]}
-          value={categoryKind}
-          onChange={setCategoryKind}
-        />
-      </View>
-      <Card>
-        {categories.map((cat, i) => {
-          const isOpen = expanded === cat.id;
-          return (
-            <View key={cat.id}>
-              {i > 0 ? <Divider /> : null}
-              <Pressable
-                onPress={() => setExpanded(isOpen ? null : cat.id)}
-                style={({ pressed }) => [
-                  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
-                  pressed && { opacity: 0.6 },
-                ]}
-              >
-                <IconBubble emoji={cat.emoji} color={cat.color} size={38} />
-                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.text }}>{cat.name}</Text>
-                <Muted size={12}>
-                  {cat.subs.length > 0 ? `${cat.subs.length} sub` : 'sem sub'} {isOpen ? '▲' : '▼'}
-                </Muted>
-              </Pressable>
-
-              {isOpen ? (
-                <View style={{ paddingLeft: 50, paddingBottom: 12, gap: 8 }}>
-                  {cat.subs.map((sub) => (
-                    <Pressable key={sub.id} onPress={() => setCategoryForm({ open: true, category: sub, parent: cat, kind: categoryKind })}>
-                      <Text style={{ color: colors.text, fontSize: 14, paddingVertical: 4 }}>• {sub.name}</Text>
-                    </Pressable>
-                  ))}
-                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-                    <Button
-                      title="Editar"
-                      variant="ghost"
-                      style={{ flex: 1, paddingVertical: 9 }}
-                      onPress={() => setCategoryForm({ open: true, category: cat, parent: null, kind: categoryKind })}
-                    />
-                    <Button
-                      title="+ subcategoria"
-                      variant="soft"
-                      style={{ flex: 1, paddingVertical: 9 }}
-                      onPress={() => setCategoryForm({ open: true, category: null, parent: cat, kind: categoryKind })}
-                    />
-                  </View>
-                </View>
-              ) : null}
-            </View>
-          );
-        })}
+      <Card style={{ marginTop: 12 }}>
+        <Muted size={12}>
+          🏷️ Categorias agora ficam junto de onde você usa: as de{' '}
+          <Text style={{ fontWeight: '700', color: colors.text }}>despesa</Text> em Despesas, as de{' '}
+          <Text style={{ fontWeight: '700', color: colors.text }}>receita</Text> na Carteira.
+        </Muted>
       </Card>
 
       <SectionTitle>Notificações</SectionTitle>
@@ -405,24 +297,6 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
           <Button title="Termos de uso" variant="ghost" onPress={() => setLegal('terms')} />
         </View>
       </Card>
-
-      <AccountForm
-        visible={accountForm.open}
-        account={accountForm.account}
-        onClose={() => setAccountForm({ open: false, account: null })}
-        onSaved={reload}
-      />
-
-      <CategoryForm
-        visible={categoryForm.open}
-        category={categoryForm.category}
-        parent={categoryForm.parent}
-        kind={categoryForm.kind}
-        onClose={() => setCategoryForm({ open: false, category: null, parent: null, kind: categoryKind })}
-        onSaved={reload}
-      />
-
-      <SalarySheet visible={salaryOpen} current={salary} onClose={() => setSalaryOpen(false)} onSaved={reload} />
 
       <ProfileSheet visible={profileOpen} initial={userName} onClose={() => setProfileOpen(false)} onSaved={reload} />
 

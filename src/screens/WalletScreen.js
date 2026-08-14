@@ -14,7 +14,9 @@ import { formatMoney, formatPercent } from '../utils/money';
 import { DonutChart, DonutLegend } from '../components/charts';
 import { AccountForm } from '../components/CatalogForms';
 import CardForm from '../components/CardForm';
+import CategoryManager from '../components/CategoryManager';
 import { AmountSheet, AssetForm, InvestmentForm } from '../components/PlanForms';
+import { SalarySheet } from '../components/SettingsSheets';
 import { Badge, Button, Card, Divider, EmptyState, Header, IconBubble, Muted, ProgressBar, SectionTitle, Segmented } from '../components/ui';
 
 const VIEWS = [
@@ -51,15 +53,17 @@ export default function WalletScreen() {
 
 function AccountView() {
   const { colors } = useTheme();
-  const { month, version, refresh } = useApp();
+  const { month, version, refresh, openTransaction } = useApp();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [salaryOpen, setSalaryOpen] = useState(false);
 
-  const { accounts, split, movements } = useMemo(
+  const { accounts, split, movements, salary } = useMemo(
     () => ({
       accounts: db.getAccountsWithBalance(),
       split: db.getSpendingSplit(month),
       movements: db.getTransactions({ month, includeOffBudget: true, limit: 8 }).filter((t) => t.account_id),
+      salary: db.getSalary(),
     }),
     [version, month]
   );
@@ -73,6 +77,28 @@ function AccountView() {
         <Text style={{ fontSize: 28, fontWeight: '800', color: colors.primary, marginTop: 2 }}>{formatMoney(total)}</Text>
         <Muted size={12} style={{ marginTop: 4 }}>somando todas as suas contas</Muted>
       </Card>
+
+      <Button title="Registrar receita" icon="＋" variant="soft" onPress={() => openTransaction(null, 'income')} style={{ marginTop: 12 }} />
+
+      <SectionTitle>Renda fixa mensal</SectionTitle>
+      <Card onPress={() => setSalaryOpen(true)}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <IconBubble emoji="💼" color={colors.income} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
+              {salary.configured && salary.cents > 0 ? `Salário: ${formatMoney(salary.cents)}` : 'Configurar salário'}
+            </Text>
+            <Muted size={12}>
+              {salary.configured && salary.cents > 0
+                ? `Entra todo dia ${salary.day} automaticamente. Pra um mês específico, ajuste na aba Meses.`
+                : 'Entra automático todo mês, sem precisar lançar na mão.'}
+            </Muted>
+          </View>
+          <Text style={{ color: colors.primary, fontWeight: '700' }}>{salary.configured ? 'editar' : 'definir'}</Text>
+        </View>
+      </Card>
+
+      <CategoryManager kind="income" title="Categorias de receita" />
 
       <SectionTitle action="+ nova" onAction={() => { setEditing(null); setFormOpen(true); }}>Suas contas</SectionTitle>
       {accounts.length === 0 ? (
@@ -147,6 +173,7 @@ function AccountView() {
       ) : null}
 
       <AccountForm visible={formOpen} account={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSaved={refresh} />
+      <SalarySheet visible={salaryOpen} current={salary} onClose={() => setSalaryOpen(false)} onSaved={refresh} />
     </>
   );
 }
