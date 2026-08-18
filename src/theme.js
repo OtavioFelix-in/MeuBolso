@@ -1,6 +1,41 @@
 // Paletas (clara/escura), catálogos fixos e as categorias que já vêm prontas
 // na primeira abertura. Os componentes pegam a paleta ativa via useTheme().
 
+// Tipografia: IBM Plex Sans pro texto (peso institucional, reto — sem o
+// arredondado "amigável" de fonte padrão), IBM Plex Mono pros valores em
+// dinheiro (algarismo tabular, cara de extrato/ficha — reforça precisão).
+// Carregada via @expo-google-fonts em App.js; aqui só os nomes de família.
+export const FONT_FAMILY = {
+  regular: 'IBMPlexSans_400Regular',
+  medium: 'IBMPlexSans_500Medium',
+  semibold: 'IBMPlexSans_600SemiBold',
+  bold: 'IBMPlexSans_700Bold',
+  mono: 'IBMPlexMono_500Medium',
+  monoBold: 'IBMPlexMono_600SemiBold',
+};
+
+// Os componentes de ui.js/fields.js já usavam `fontWeight` (herdado da fonte
+// do sistema, que sintetiza qualquer peso). Fonte custom não faz isso — cada
+// peso é uma família separada — então esse helper traduz o peso pedido pra
+// família certa, sem precisar reescrever `fontWeight` em cada tela.
+export function fontForWeight(weight) {
+  const w = String(weight);
+  if (w === '800' || w === '700') return FONT_FAMILY.bold;
+  if (w === '600') return FONT_FAMILY.semibold;
+  if (w === '500') return FONT_FAMILY.medium;
+  return FONT_FAMILY.regular;
+}
+
+// Escala de raio — mais reta, menos "bolha". Usada em vez de número solto
+// por componente (Card, Button, Chip... cada um tinha o seu antes).
+export const RADIUS = { sm: 6, md: 10, lg: 14, xl: 20 };
+
+// Gradiente de marca (verde escuro -> preto), o mesmo do ícone do app. Usado
+// com moderação nos momentos de destaque (cartão de resultado do mês,
+// splash, boas-vindas do onboarding) — não em todo card, senão perde força.
+export const BRAND_GRADIENT = ['#154D37', '#0B2A1F', '#050605'];
+export const BRAND_GRADIENT_ANGLE = { start: { x: 0, y: 0 }, end: { x: 1, y: 1 } };
+
 export const palettes = {
   light: {
     background: '#F4F6FB',

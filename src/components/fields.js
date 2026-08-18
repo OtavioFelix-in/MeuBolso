@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import * as db from '../db';
 import { useTheme } from '../theme-context';
+import { FONT_FAMILY, RADIUS } from '../theme';
 import { formatDate, fromIsoDate, toIsoDate } from '../utils/date';
 import { centsToDigits, digitsToCents, formatMoney } from '../utils/money';
 import { Chip, IconBubble, Sheet } from './ui';
@@ -15,13 +16,13 @@ export function Field({ label, children, hint, style }) {
   return (
     <View style={[{ marginBottom: 14 }, style]}>
       {label ? (
-        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 7 }}>
+        <Text style={{ fontSize: 13, fontFamily: FONT_FAMILY.semibold, color: colors.textMuted, marginBottom: 7 }}>
           {label}
         </Text>
       ) : null}
       {children}
       {hint ? (
-        <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 6, lineHeight: 17 }}>{hint}</Text>
+        <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 6, lineHeight: 17, fontFamily: FONT_FAMILY.regular }}>{hint}</Text>
       ) : null}
     </View>
   );
@@ -34,10 +35,11 @@ function useBoxStyle() {
       backgroundColor: colors.card,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 14,
+      borderRadius: RADIUS.md,
       paddingHorizontal: 14,
       paddingVertical: Platform.OS === 'ios' ? 14 : 11,
       fontSize: 15,
+      fontFamily: FONT_FAMILY.regular,
       color: colors.text,
     }),
     [colors]
@@ -98,21 +100,21 @@ export function MoneyField({ cents, onChange, autoFocus, color, big = true, retu
         backgroundColor: colors.card,
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: 16,
+        borderRadius: RADIUS.lg,
         paddingHorizontal: 16,
         paddingVertical: big ? 10 : 6,
         flexDirection: 'row',
         alignItems: 'center',
       }}
     >
-      <Text style={{ fontSize: big ? 22 : 16, fontWeight: '700', color: colors.textMuted, marginRight: 6 }}>
+      <Text style={{ fontSize: big ? 22 : 16, fontFamily: FONT_FAMILY.monoBold, color: colors.textMuted, marginRight: 6 }}>
         R$
       </Text>
       <TextInput
         style={{
           flex: 1,
           fontSize: big ? 30 : 18,
-          fontWeight: '800',
+          fontFamily: FONT_FAMILY.monoBold,
           color: tint,
           padding: 0,
           paddingVertical: Platform.OS === 'ios' ? 8 : 4,
@@ -220,10 +222,10 @@ export function OptionRow({ emoji, label, hint, active, onPress, color, right })
     >
       {emoji ? <IconBubble emoji={emoji} color={color ?? colors.primary} size={36} /> : null}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{label}</Text>
-        {hint ? <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{hint}</Text> : null}
+        <Text style={{ fontSize: 15, fontFamily: FONT_FAMILY.semibold, color: colors.text }}>{label}</Text>
+        {hint ? <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2, fontFamily: FONT_FAMILY.regular }}>{hint}</Text> : null}
       </View>
-      {right ?? (active ? <Text style={{ color: colors.primary, fontWeight: '800' }}>✓</Text> : null)}
+      {right ?? (active ? <Text style={{ color: colors.primary, fontFamily: FONT_FAMILY.bold }}>✓</Text> : null)}
     </Pressable>
   );
 }
@@ -280,7 +282,7 @@ export function CategoryField({ kind, value, onChange }) {
                 ]}
               >
                 <IconBubble emoji={cat.emoji} color={cat.color} size={36} />
-                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.text }}>{cat.name}</Text>
+                <Text style={{ flex: 1, fontSize: 15, fontFamily: FONT_FAMILY.semibold, color: colors.text }}>{cat.name}</Text>
                 {cat.subs.length > 0 ? (
                   <Text style={{ color: colors.textMuted, fontSize: 12 }}>
                     {isOpen ? '▲' : `${cat.subs.length} ▾`}
@@ -336,11 +338,11 @@ export function SwitchRow({ label, hint, value, onChange, emoji }) {
   return (
     <View style={[styles.switchRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
+        <Text style={{ fontSize: 15, fontFamily: FONT_FAMILY.semibold, color: colors.text }}>
           {emoji ? `${emoji}  ` : ''}
           {label}
         </Text>
-        {hint ? <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 3, lineHeight: 17 }}>{hint}</Text> : null}
+        {hint ? <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 3, lineHeight: 17, fontFamily: FONT_FAMILY.regular }}>{hint}</Text> : null}
       </View>
       <Switch
         value={value}
@@ -361,17 +363,17 @@ export function StepperField({ value, onChange, min = 1, max = 99, suffix }) {
   return (
     <View style={[box, { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }]}>
       <Pressable onPress={() => onChange(clamp(value - 1))} hitSlop={8} style={styles.stepperButton}>
-        <Text style={{ fontSize: 20, color: colors.primary, fontWeight: '800' }}>−</Text>
+        <Text style={{ fontSize: 20, color: colors.primary, fontFamily: FONT_FAMILY.bold }}>−</Text>
       </Pressable>
       <TextInput
-        style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text, padding: 0 }}
+        style={{ flex: 1, textAlign: 'center', fontSize: 17, fontFamily: FONT_FAMILY.monoBold, color: colors.text, padding: 0 }}
         value={String(value)}
         onChangeText={(t) => onChange(clamp(parseInt(t.replace(/\D/g, ''), 10) || min))}
         keyboardType="number-pad"
       />
-      {suffix ? <Text style={{ color: colors.textMuted, fontSize: 13, marginRight: 8 }}>{suffix}</Text> : null}
+      {suffix ? <Text style={{ color: colors.textMuted, fontSize: 13, marginRight: 8, fontFamily: FONT_FAMILY.regular }}>{suffix}</Text> : null}
       <Pressable onPress={() => onChange(clamp(value + 1))} hitSlop={8} style={styles.stepperButton}>
-        <Text style={{ fontSize: 20, color: colors.primary, fontWeight: '800' }}>+</Text>
+        <Text style={{ fontSize: 20, color: colors.primary, fontFamily: FONT_FAMILY.bold }}>+</Text>
       </Pressable>
     </View>
   );
@@ -399,7 +401,7 @@ export function EmojiColorField({ emoji, color, onEmoji, onColor, emojis, colorO
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 12,
+                borderRadius: RADIUS.sm,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: emoji === e ? colors.primaryLight : colors.cardAlt,
@@ -438,7 +440,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: RADIUS.md,
     padding: 12,
     marginBottom: 8,
   },
@@ -454,7 +456,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: RADIUS.md,
     padding: 14,
     marginBottom: 10,
   },

@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#0E1116",
+    "backgroundColor": "#050605",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.otavio.meubolso"
@@ -15,7 +15,7 @@
       "package": "com.otavio.meubolso",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#00A870",
+        "backgroundImage": "./assets/android-icon-background.png",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
@@ -39,7 +39,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#00A870"
+          "color": "#23966B"
         }
       ],
       [
@@ -47,7 +47,19 @@
         {
           "faceIDPermission": "O Meu Bolso usa a biometria pra proteger seus dados financeiros."
         }
-      ]
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "backgroundColor": "#050605",
+          "dark": {
+            "backgroundColor": "#050605"
+          }
+        }
+      ],
+      "expo-font"
     ]
   }
 }

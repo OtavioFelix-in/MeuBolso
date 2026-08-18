@@ -2,10 +2,12 @@
 // atalhos pras áreas e os gráficos principais. Cada função de verdade mora na
 // sua própria tela — aqui é só a visão geral e a porta de entrada.
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useApp } from '../app-context';
 import * as db from '../db';
+import { BRAND_GRADIENT, BRAND_GRADIENT_ANGLE, FONT_FAMILY, RADIUS } from '../theme';
 import { useTheme } from '../theme-context';
 import { dueLabel, monthLabel, today } from '../utils/date';
 import { formatMoney } from '../utils/money';
@@ -170,15 +172,21 @@ export default function DashboardScreen({ onOpenSettings }) {
         </Pressable>
       </View>
 
-      {/* Resultado do mês selecionado (muda conforme você navega entre os meses) */}
-      <Card style={{ marginTop: 14, backgroundColor: colors.primary, borderColor: colors.primary }}>
-        <Text style={{ color: colors.onPrimary, opacity: 0.85, fontSize: 13, fontWeight: '600' }}>
+      {/* Resultado do mês selecionado (muda conforme você navega entre os meses).
+          Gradiente de marca — o único lugar que usa ele com essa força, de propósito. */}
+      <LinearGradient
+        colors={BRAND_GRADIENT}
+        start={BRAND_GRADIENT_ANGLE.start}
+        end={BRAND_GRADIENT_ANGLE.end}
+        style={{ marginTop: 14, borderRadius: RADIUS.lg, padding: 16 }}
+      >
+        <Text style={{ color: '#fff', opacity: 0.85, fontSize: 13, fontFamily: FONT_FAMILY.semibold }}>
           {summary.leftover >= 0 ? 'Sobrou em' : 'Faltou em'} {monthLabel(month)}
         </Text>
-        <Text style={{ color: colors.onPrimary, fontSize: 34, fontWeight: '800', marginTop: 4 }}>
+        <Text style={{ color: '#fff', fontSize: 34, fontFamily: FONT_FAMILY.monoBold, marginTop: 4 }}>
           {mask(formatMoney(summary.leftover))}
         </Text>
-        <Text style={{ color: colors.onPrimary, opacity: 0.8, fontSize: 12, marginTop: 6, lineHeight: 17 }}>
+        <Text style={{ color: '#fff', opacity: 0.8, fontSize: 12, marginTop: 6, lineHeight: 17, fontFamily: FONT_FAMILY.regular }}>
           Só deste mês — receitas menos despesas e o que você guardou.
         </Text>
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
@@ -188,12 +196,12 @@ export default function DashboardScreen({ onOpenSettings }) {
         </View>
 
         <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)' }}>
-          <Text style={{ color: colors.onPrimary, opacity: 0.85, fontSize: 12 }}>
+          <Text style={{ color: '#fff', opacity: 0.85, fontSize: 12, fontFamily: FONT_FAMILY.regular }}>
             💰 Saldo total acumulado (todos os meses):{' '}
-            <Text style={{ fontWeight: '800' }}>{mask(formatMoney(worth.available))}</Text>
+            <Text style={{ fontFamily: FONT_FAMILY.bold }}>{mask(formatMoney(worth.available))}</Text>
           </Text>
         </View>
-      </Card>
+      </LinearGradient>
 
       {/* Agenda: único atalho que fica aqui, porque não tem outro caminho até ela
           (Contas fixas e Parcelas já ficam em Despesas › Fixas; Carteira e Meses
@@ -330,11 +338,10 @@ function ProjRow({ label, value, color, strong }) {
 }
 
 function HeroStat({ label, value }) {
-  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 14, padding: 10 }}>
-      <Text style={{ color: colors.onPrimary, opacity: 0.85, fontSize: 11, fontWeight: '600' }}>{label}</Text>
-      <Text style={{ color: colors.onPrimary, fontSize: 15, fontWeight: '800', marginTop: 2 }} numberOfLines={1} adjustsFontSizeToFit>
+    <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: RADIUS.md, padding: 10 }}>
+      <Text style={{ color: '#fff', opacity: 0.85, fontSize: 11, fontFamily: FONT_FAMILY.semibold }}>{label}</Text>
+      <Text style={{ color: '#fff', fontSize: 15, fontFamily: FONT_FAMILY.monoBold, marginTop: 2 }} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
     </View>

@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '../theme-context';
+import { FONT_FAMILY, RADIUS, fontForWeight } from '../theme';
 import { formatMoney } from '../utils/money';
 
 // ---- Cartão ----
@@ -22,7 +23,7 @@ export function Card({ children, style, onPress, padded = true }) {
   const { colors, isDark } = useTheme();
   const base = {
     backgroundColor: colors.card,
-    borderRadius: 20,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: padded ? 16 : 0,
@@ -46,10 +47,10 @@ export function SectionTitle({ children, action, onAction }) {
   const { colors } = useTheme();
   return (
     <View style={styles.sectionTitle}>
-      <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text, flex: 1 }}>{children}</Text>
+      <Text style={{ fontSize: 17, fontFamily: FONT_FAMILY.bold, color: colors.text, flex: 1 }}>{children}</Text>
       {action ? (
         <Pressable onPress={onAction} hitSlop={8}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.primary }}>{action}</Text>
+          <Text style={{ fontSize: 14, fontFamily: FONT_FAMILY.semibold, color: colors.primary }}>{action}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -58,7 +59,7 @@ export function SectionTitle({ children, action, onAction }) {
 
 export function Muted({ children, style, size = 13 }) {
   const { colors } = useTheme();
-  return <Text style={[{ color: colors.textMuted, fontSize: size }, style]}>{children}</Text>;
+  return <Text style={[{ color: colors.textMuted, fontSize: size, fontFamily: FONT_FAMILY.regular }, style]}>{children}</Text>;
 }
 
 export function Money({ cents, kind, size = 16, weight = '700', style, sign = false }) {
@@ -66,8 +67,9 @@ export function Money({ cents, kind, size = 16, weight = '700', style, sign = fa
   const color =
     kind === 'income' ? colors.income : kind === 'expense' ? colors.expense : kind === 'muted' ? colors.textMuted : colors.text;
   const prefix = kind === 'income' ? '+' : kind === 'expense' ? '-' : '';
+  const mono = Number(weight) >= 700 ? FONT_FAMILY.monoBold : FONT_FAMILY.mono;
   return (
-    <Text style={[{ color, fontSize: size, fontWeight: weight }, style]}>
+    <Text style={[{ color, fontSize: size, fontFamily: mono }, style]}>
       {prefix}
       {formatMoney(Math.abs(cents ?? 0), { sign: sign && !prefix })}
     </Text>
@@ -99,7 +101,7 @@ export function Button({ title, onPress, variant = 'primary', style, disabled, l
       {loading ? (
         <ActivityIndicator color={palette.fg} />
       ) : (
-        <Text style={{ color: palette.fg, fontWeight: '700', fontSize: 15 }}>
+        <Text style={{ color: palette.fg, fontFamily: FONT_FAMILY.semibold, fontSize: 15 }}>
           {icon ? `${icon}  ` : ''}
           {title}
         </Text>
@@ -127,7 +129,7 @@ export function Chip({ label, active, onPress, color, emoji }) {
         numberOfLines={1}
         style={{
           color: active ? '#fff' : colors.text,
-          fontWeight: active ? '700' : '600',
+          fontFamily: active ? FONT_FAMILY.semibold : FONT_FAMILY.medium,
           fontSize: 13,
         }}
       >
@@ -156,7 +158,7 @@ export function Segmented({ options, value, onChange, activeColor }) {
               numberOfLines={1}
               style={{
                 color: active ? '#fff' : colors.textMuted,
-                fontWeight: '700',
+                fontFamily: FONT_FAMILY.semibold,
                 fontSize: 13,
               }}
             >
@@ -206,14 +208,15 @@ export function Badge({ label, color, tone = 'soft' }) {
           : { backgroundColor: `${tint}22`, borderColor: `${tint}55`, borderWidth: 1 },
       ]}
     >
-      <Text style={{ color: tone === 'solid' ? '#fff' : tint, fontSize: 11, fontWeight: '700' }}>
+      <Text style={{ color: tone === 'solid' ? '#fff' : tint, fontSize: 11, fontFamily: FONT_FAMILY.semibold }}>
         {label}
       </Text>
     </View>
   );
 }
 
-// Bolinha com emoji, usada em quase toda lista do app.
+// Ícone (emoji) num quadrado levemente arredondado — menos "bolinha fofa",
+// mais crachá/selo. Usado em quase toda lista do app.
 export function IconBubble({ emoji, color, size = 42 }) {
   const { colors } = useTheme();
   const tint = color ?? colors.primary;
@@ -222,7 +225,7 @@ export function IconBubble({ emoji, color, size = 42 }) {
       style={{
         width: size,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: size * 0.28,
         backgroundColor: `${tint}22`,
         alignItems: 'center',
         justifyContent: 'center',
@@ -238,11 +241,11 @@ export function EmptyState({ emoji, title, subtitle, action, onAction }) {
   return (
     <View style={styles.empty}>
       <Text style={{ fontSize: 40 }}>{emoji}</Text>
-      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 10, textAlign: 'center' }}>
+      <Text style={{ fontSize: 16, fontFamily: FONT_FAMILY.semibold, color: colors.text, marginTop: 10, textAlign: 'center' }}>
         {title}
       </Text>
       {subtitle ? (
-        <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 19 }}>
+        <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 19, fontFamily: FONT_FAMILY.regular }}>
           {subtitle}
         </Text>
       ) : null}
@@ -266,8 +269,8 @@ export function Sheet({ visible, onClose, title, children, footer, height = '90%
       backdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
       panel: {
         backgroundColor: colors.background,
-        borderTopLeftRadius: 26,
-        borderTopRightRadius: 26,
+        borderTopLeftRadius: RADIUS.xl,
+        borderTopRightRadius: RADIUS.xl,
         maxHeight: height,
         paddingBottom: 8,
       },
@@ -287,7 +290,7 @@ export function Sheet({ visible, onClose, title, children, footer, height = '90%
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
           </View>
           <View style={styles.sheetHeader}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, flex: 1 }}>{title}</Text>
+            <Text style={{ fontSize: 18, fontFamily: FONT_FAMILY.bold, color: colors.text, flex: 1 }}>{title}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <Text style={{ fontSize: 20, color: colors.textMuted }}>✕</Text>
             </Pressable>
@@ -320,15 +323,15 @@ export function Header({ title, subtitle, right, onBack }) {
         </Pressable>
       ) : null}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text }}>{title}</Text>
-        {subtitle ? <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{subtitle}</Text> : null}
+        <Text style={{ fontSize: 26, fontFamily: FONT_FAMILY.bold, color: colors.text }}>{title}</Text>
+        {subtitle ? <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2, fontFamily: FONT_FAMILY.regular }}>{subtitle}</Text> : null}
       </View>
       {right}
     </View>
   );
 }
 
-// Botão redondo do cabeçalho (⚙️, 🌙, ➕...).
+// Botão do cabeçalho (⚙️, 🌙, ➕...) — quadrado arredondado, não círculo.
 export function RoundButton({ emoji, onPress, color }) {
   const { colors } = useTheme();
   return (
@@ -353,7 +356,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button: {
-    borderRadius: 14,
+    borderRadius: RADIUS.md,
     borderWidth: 1,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -363,12 +366,12 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 9,
-    borderRadius: 12,
+    borderRadius: RADIUS.sm,
     borderWidth: 1,
   },
   segmented: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: RADIUS.md,
     borderWidth: 1,
     padding: 3,
     gap: 3,
@@ -376,13 +379,13 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     paddingVertical: 9,
-    borderRadius: 11,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
   },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: RADIUS.sm,
     alignSelf: 'flex-start',
   },
   empty: {
@@ -420,7 +423,7 @@ const styles = StyleSheet.create({
   roundButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: RADIUS.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

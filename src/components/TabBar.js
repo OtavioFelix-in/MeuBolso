@@ -1,16 +1,18 @@
 // Barra inferior feita à mão (sem biblioteca de navegação) + botão flutuante
 // de novo lançamento, que é a ação mais usada do app.
 
+import { Feather } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { FONT_FAMILY, RADIUS } from '../theme';
 import { useTheme } from '../theme-context';
 
 export const TABS = [
-  { key: 'home', emoji: '🏠', label: 'Início' },
-  { key: 'expenses', emoji: '💸', label: 'Despesas' },
-  { key: 'meses', emoji: '📆', label: 'Meses' },
-  { key: 'wallet', emoji: '💼', label: 'Carteira' },
-  { key: 'reports', emoji: '💡', label: 'Insights' },
+  { key: 'home', icon: 'home', label: 'Início' },
+  { key: 'expenses', icon: 'credit-card', label: 'Despesas' },
+  { key: 'meses', icon: 'calendar', label: 'Meses' },
+  { key: 'wallet', icon: 'briefcase', label: 'Carteira' },
+  { key: 'reports', icon: 'trending-up', label: 'Insights' },
 ];
 
 export default function TabBar({ active, onChange }) {
@@ -24,7 +26,7 @@ export default function TabBar({ active, onChange }) {
         return (
           <Pressable key={tab.key} style={styles.tab} onPress={() => onChange(tab.key)} hitSlop={4}>
             <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
-              <Text style={{ fontSize: 17, opacity: isActive ? 1 : 0.55 }}>{tab.emoji}</Text>
+              <Feather name={tab.icon} size={19} color={isActive ? colors.primary : colors.textMuted} />
             </View>
             <Text style={[styles.label, isActive && styles.labelActive]} numberOfLines={1}>
               {tab.label}
@@ -36,7 +38,7 @@ export default function TabBar({ active, onChange }) {
   );
 }
 
-export function Fab({ onPress, emoji = '＋' }) {
+export function Fab({ onPress, icon = 'plus' }) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -46,9 +48,9 @@ export function Fab({ onPress, emoji = '＋' }) {
           position: 'absolute',
           right: 20,
           bottom: 18,
-          width: 58,
-          height: 58,
-          borderRadius: 29,
+          width: 56,
+          height: 56,
+          borderRadius: RADIUS.xl,
           backgroundColor: colors.primary,
           alignItems: 'center',
           justifyContent: 'center',
@@ -61,7 +63,7 @@ export function Fab({ onPress, emoji = '＋' }) {
         pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] },
       ]}
     >
-      <Text style={{ fontSize: 30, color: colors.onPrimary, fontWeight: '300', marginTop: -3 }}>{emoji}</Text>
+      <Feather name={icon} size={26} color={colors.onPrimary} />
     </Pressable>
   );
 }
@@ -79,12 +81,12 @@ function createStyles(colors) {
     tab: {
       flex: 1,
       alignItems: 'center',
-      gap: 2,
+      gap: 3,
     },
     iconWrap: {
       paddingHorizontal: 15,
-      paddingVertical: 3,
-      borderRadius: 14,
+      paddingVertical: 5,
+      borderRadius: RADIUS.md,
     },
     iconWrapActive: {
       backgroundColor: colors.primaryLight,
@@ -92,10 +94,11 @@ function createStyles(colors) {
     label: {
       fontSize: 10.5,
       color: colors.textMuted,
+      fontFamily: FONT_FAMILY.medium,
     },
     labelActive: {
       color: colors.primary,
-      fontWeight: '700',
+      fontFamily: FONT_FAMILY.bold,
     },
   });
 }
