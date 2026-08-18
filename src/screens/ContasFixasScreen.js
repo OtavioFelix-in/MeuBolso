@@ -12,6 +12,7 @@ import { formatMoney } from '../utils/money';
 import MonthSwitcher from '../components/MonthSwitcher';
 import RecurrenceForm from '../components/RecurrenceForm';
 import { Card, Divider, EmptyState, Header, IconBubble, Muted, ProgressBar, SectionTitle, Sheet } from '../components/ui';
+import { fontForWeight } from '../theme';
 
 export default function ContasFixasScreen() {
   const { colors } = useTheme();
@@ -49,7 +50,7 @@ export default function ContasFixasScreen() {
 
       <Card style={{ marginTop: 14 }}>
         <Muted>Contas fixas de {monthLabel(month, { full: true })}</Muted>
-        <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text, marginTop: 2 }}>{formatMoney(totalBills)}</Text>
+        <Text style={{ fontSize: 26, fontFamily: fontForWeight('800'), color: colors.text, marginTop: 2 }}>{formatMoney(totalBills)}</Text>
         <View style={{ marginTop: 10, gap: 6 }}>
           <ProgressBar percent={totalBills > 0 ? (paidBills / totalBills) * 100 : 0} color={colors.income} />
           <Muted size={12}>{formatMoney(paidBills)} já pagos · faltam {formatMoney(totalBills - paidBills)}</Muted>
@@ -162,7 +163,7 @@ function BillRow({ rec, onEdit, onHistory, onPaid }) {
           color={rec.is_paid ? colors.income : late ? colors.expense : (rec.parent_color ?? rec.category_color ?? colors.warning)}
         />
         <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{rec.name}</Text>
+          <Text numberOfLines={1} style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{rec.name}</Text>
           <Text style={{ fontSize: 12, color: late ? colors.expense : colors.textMuted, marginTop: 2 }}>
             dia {rec.due_day} · {rec.is_paid ? (rec.kind === 'income' ? 'recebido ✓' : 'pago ✓') : dueLabel(rec.due_date)}
             {rec.variable ? ' · valor variável' : ''}
@@ -171,16 +172,16 @@ function BillRow({ rec, onEdit, onHistory, onPaid }) {
       </Pressable>
 
       <View style={{ alignItems: 'flex-end', gap: 4 }}>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: rec.is_paid ? colors.textMuted : colors.text }}>
+        <Text style={{ fontSize: 15, fontFamily: fontForWeight('700'), color: rec.is_paid ? colors.textMuted : colors.text }}>
           {formatMoney(rec.month_amount_cents)}
         </Text>
         {rec.is_paid ? (
           <Pressable onPress={onHistory} hitSlop={8}>
-            <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700' }}>histórico</Text>
+            <Text style={{ fontSize: 11, color: colors.primary, fontFamily: fontForWeight('700') }}>histórico</Text>
           </Pressable>
         ) : (
           <Pressable onPress={markPaid} hitSlop={8} style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: colors.primaryLight }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+            <Text style={{ fontSize: 11, fontFamily: fontForWeight('700'), color: colors.primary }}>
               {rec.kind === 'income' ? 'recebi ✓' : 'paguei ✓'}
             </Text>
           </Pressable>
@@ -201,7 +202,7 @@ function HistorySheet({ recurrence, onClose }) {
       {paid.length > 0 ? (
         <Card style={{ marginBottom: 14 }}>
           <Muted>Média paga por mês</Muted>
-          <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 2 }}>{formatMoney(average)}</Text>
+          <Text style={{ fontSize: 22, fontFamily: fontForWeight('800'), color: colors.text, marginTop: 2 }}>{formatMoney(average)}</Text>
           <Muted size={12}>em {paid.length} {paid.length === 1 ? 'mês' : 'meses'} de histórico</Muted>
         </Card>
       ) : null}
@@ -212,10 +213,10 @@ function HistorySheet({ recurrence, onClose }) {
         history.map((item) => (
           <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontWeight: '600' }}>{formatDate(item.date)}</Text>
+              <Text style={{ color: colors.text, fontFamily: fontForWeight('600') }}>{formatDate(item.date)}</Text>
               <Muted size={12}>{item.paid ? 'confirmado' : 'previsto'}</Muted>
             </View>
-            <Text style={{ color: item.paid ? colors.text : colors.textMuted, fontWeight: '700' }}>{formatMoney(item.amount_cents)}</Text>
+            <Text style={{ color: item.paid ? colors.text : colors.textMuted, fontFamily: fontForWeight('700') }}>{formatMoney(item.amount_cents)}</Text>
           </View>
         ))
       )}

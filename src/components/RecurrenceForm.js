@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as db from '../db';
-import { PAYMENT_METHODS } from '../theme';
+import { PAYMENT_METHODS, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { currentMonth, monthOf } from '../utils/date';
 import { formatMoney } from '../utils/money';
@@ -183,7 +183,7 @@ export default function RecurrenceForm({ visible, onClose, onSaved, recurrence, 
       {form.endMonth ? (
         <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 10 }}>
           Última cobrança em {form.endMonth}.{' '}
-          <Text style={{ color: colors.primary, fontWeight: '700' }} onPress={() => set({ endMonth: null })}>
+          <Text style={{ color: colors.primary, fontFamily: fontForWeight('700') }} onPress={() => set({ endMonth: null })}>
             Remover
           </Text>
         </Text>

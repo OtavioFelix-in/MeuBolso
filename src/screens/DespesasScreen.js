@@ -19,6 +19,7 @@ import SalarySheet from '../components/SalarySheet';
 import TipCard from '../components/TipCard';
 import TransactionRow from '../components/TransactionRow';
 import { Button, Card, Divider, EmptyState, Header, IconBubble, Money, Muted, SectionTitle, Segmented } from '../components/ui';
+import { fontForWeight } from '../theme';
 
 const TABS = [
   { key: 'all', label: 'Todas' },
@@ -166,7 +167,7 @@ function AllTab({ breakdown, donutData, summary, days, categories, categoryId, s
         days.map((day) => (
           <View key={day.date} style={{ marginTop: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 }}>
-              <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: colors.textMuted }}>{formatDateLong(day.date)}</Text>
+              <Text style={{ flex: 1, fontSize: 13, fontFamily: fontForWeight('700'), color: colors.textMuted }}>{formatDateLong(day.date)}</Text>
               <Muted size={12}>-{formatMoney(day.totalOut)}</Muted>
             </View>
             <Card>
@@ -224,7 +225,7 @@ function FixedTab({ items, installments, month, refresh, navigate }) {
               <Pressable onPress={() => navigate('installments')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 }}>
                 <IconBubble emoji={it.parent_emoji ?? it.category_emoji ?? '💳'} color={it.parent_color ?? it.category_color ?? colors.expense} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{it.description}</Text>
+                  <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{it.description}</Text>
                   <Muted size={12}>parcela {it.paid_parcels + 1}/{it.count} · {formatMoney(Math.round(it.total_cents / it.count))}</Muted>
                 </View>
                 {it.off_budget === 1 ? <Muted size={11}>fora do saldo</Muted> : null}
@@ -290,17 +291,17 @@ function RecRow({ rec, month, refresh, variable, openTransaction }) {
       >
         <IconBubble emoji={rec.parent_emoji ?? rec.category_emoji ?? '🧾'} color={rec.is_paid ? colors.income : late ? colors.expense : (rec.parent_color ?? rec.category_color ?? colors.warning)} />
         <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{rec.name}</Text>
+          <Text numberOfLines={1} style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{rec.name}</Text>
           <Text style={{ fontSize: 12, color: late ? colors.expense : colors.textMuted, marginTop: 2 }}>
             dia {rec.due_day} · {rec.is_paid ? 'pago ✓' : dueLabel(rec.due_date)}{variable ? ' · valor estimado' : ''}
           </Text>
         </View>
       </Pressable>
       <View style={{ alignItems: 'flex-end', gap: 4 }}>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: rec.is_paid ? colors.textMuted : colors.text }}>{formatMoney(rec.month_amount_cents)}</Text>
+        <Text style={{ fontSize: 15, fontFamily: fontForWeight('700'), color: rec.is_paid ? colors.textMuted : colors.text }}>{formatMoney(rec.month_amount_cents)}</Text>
         {!rec.is_paid ? (
           <Pressable onPress={markPaid} hitSlop={8} style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: colors.primaryLight }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>paguei ✓</Text>
+            <Text style={{ fontSize: 11, fontFamily: fontForWeight('700'), color: colors.primary }}>paguei ✓</Text>
           </Pressable>
         ) : null}
       </View>
@@ -312,8 +313,8 @@ function SummaryCell({ label, value, color }) {
   const { colors } = useTheme();
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
-      <Text style={{ fontSize: 15, fontWeight: '800', color, marginTop: 3 }} numberOfLines={1} adjustsFontSizeToFit>{formatMoney(value)}</Text>
+      <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: fontForWeight('600'), textAlign: 'center' }}>{label}</Text>
+      <Text style={{ fontSize: 15, fontFamily: fontForWeight('800'), color, marginTop: 3 }} numberOfLines={1} adjustsFontSizeToFit>{formatMoney(value)}</Text>
     </View>
   );
 }

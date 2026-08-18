@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useApp } from '../app-context';
 import { useTheme } from '../theme-context';
 import { addMonths, currentMonth, monthLabel } from '../utils/date';
+import { fontForWeight } from '../theme';
 
 export default function MonthSwitcher({ compact }) {
   const { colors } = useTheme();
@@ -25,11 +26,11 @@ export default function MonthSwitcher({ compact }) {
     >
       <Arrow label="‹" onPress={() => setMonth(addMonths(month, -1))} />
       <Pressable onPress={() => setMonth(currentMonth())} style={{ flex: 1, alignItems: 'center' }}>
-        <Text style={{ fontSize: compact ? 14 : 15, fontWeight: '700', color: colors.text }}>
+        <Text style={{ fontSize: compact ? 14 : 15, fontFamily: fontForWeight('700'), color: colors.text }}>
           {monthLabel(month, { full: true })}
         </Text>
         {!isCurrent ? (
-          <Text style={{ fontSize: 10, color: colors.primary, fontWeight: '600' }}>voltar pro mês atual</Text>
+          <Text style={{ fontSize: 10, color: colors.primary, fontFamily: fontForWeight('600') }}>voltar pro mês atual</Text>
         ) : null}
       </Pressable>
       <Arrow label="›" onPress={() => setMonth(addMonths(month, 1))} />

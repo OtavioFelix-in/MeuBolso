@@ -9,6 +9,7 @@ import { useTheme } from '../../theme-context';
 import { addMonths, monthLabel } from '../../utils/date';
 import { formatMoney } from '../../utils/money';
 import { CompareBars, MonthBars } from '../../components/charts';
+import { fontForWeight } from '../../theme';
 import {
   Badge,
   Card,
@@ -57,15 +58,15 @@ export default function AnswersView() {
       <SectionTitle>Perguntas que o app responde</SectionTitle>
       {answers.map((answer) => (
         <Card key={answer.key} style={{ marginBottom: 10 }}>
-          <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }}>
+          <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: fontForWeight('600') }}>
             {answer.emoji} {answer.question}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 6, gap: 10 }}>
-            <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: colors.text }}>{answer.answer}</Text>
+            <Text style={{ flex: 1, fontSize: 16, fontFamily: fontForWeight('700'), color: colors.text }}>{answer.answer}</Text>
             <Text
               style={{
                 fontSize: 18,
-                fontWeight: '800',
+                fontFamily: fontForWeight('800'),
                 color: answer.positive === false ? colors.expense : answer.positive ? colors.income : colors.text,
               }}
             >
@@ -98,7 +99,7 @@ export default function AnswersView() {
         <Divider style={{ marginVertical: 14 }} />
         {series.map((item) => (
           <View key={item.month} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
-            <Text style={{ width: 60, fontSize: 13, color: colors.textMuted, fontWeight: '600' }}>
+            <Text style={{ width: 60, fontSize: 13, color: colors.textMuted, fontFamily: fontForWeight('600') }}>
               {monthLabel(item.month)}
             </Text>
             <Text style={{ flex: 1, fontSize: 13, color: colors.income }}>+{formatMoney(item.income)}</Text>
@@ -108,7 +109,7 @@ export default function AnswersView() {
                 width: 92,
                 textAlign: 'right',
                 fontSize: 13,
-                fontWeight: '700',
+                fontFamily: fontForWeight('700'),
                 color: item.balance >= 0 ? colors.text : colors.expense,
               }}
             >
@@ -133,12 +134,12 @@ export default function AnswersView() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <IconBubble emoji={cat.emoji} color={cat.color} size={38} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{cat.name}</Text>
+                    <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{cat.name}</Text>
                     <Muted size={12}>
                       {cat.entries} {cat.entries === 1 ? 'lançamento' : 'lançamentos'} · {cat.percent.toFixed(0)}% do mês
                     </Muted>
                   </View>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>
+                  <Text style={{ fontSize: 15, fontFamily: fontForWeight('700'), color: colors.text }}>
                     {formatMoney(cat.total_cents)}
                   </Text>
                 </View>
@@ -168,7 +169,7 @@ function CategoryDetail({ category, month }) {
     <>
       <Card style={{ marginBottom: 14 }}>
         <Muted>Gasto em {monthLabel(month, { full: true })}</Muted>
-        <Text style={{ fontSize: 26, fontWeight: '800', color: category.color, marginTop: 2 }}>
+        <Text style={{ fontSize: 26, fontFamily: fontForWeight('800'), color: category.color, marginTop: 2 }}>
           {formatMoney(category.total_cents)}
         </Text>
         <Muted size={12} style={{ marginTop: 4 }}>
@@ -176,7 +177,7 @@ function CategoryDetail({ category, month }) {
         </Muted>
       </Card>
 
-      <Text style={{ fontWeight: '800', color: colors.text, marginBottom: 10 }}>Evolução</Text>
+      <Text style={{ fontFamily: fontForWeight('800'), color: colors.text, marginBottom: 10 }}>Evolução</Text>
       <Card style={{ marginBottom: 14 }}>
         <CompareBars
           rows={series.map((s) => ({ label: monthLabel(s.month), value: s.total, highlight: s.month === month }))}
@@ -184,7 +185,7 @@ function CategoryDetail({ category, month }) {
         />
       </Card>
 
-      <Text style={{ fontWeight: '800', color: colors.text, marginBottom: 10 }}>Por subcategoria</Text>
+      <Text style={{ fontFamily: fontForWeight('800'), color: colors.text, marginBottom: 10 }}>Por subcategoria</Text>
       <Card>
         {subs.length === 0 ? (
           <Muted>Sem lançamentos neste mês.</Muted>
@@ -195,7 +196,7 @@ function CategoryDetail({ category, month }) {
               <Muted size={12} style={{ marginRight: 10 }}>
                 {sub.entries}x
               </Muted>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
+              <Text style={{ color: colors.text, fontFamily: fontForWeight('700'), fontSize: 14 }}>
                 {formatMoney(sub.total_cents)}
               </Text>
             </View>
@@ -216,7 +217,7 @@ function Comparison({ label, current, delta, goodWhenUp = false }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{label}</Text>
+        <Text style={{ fontSize: 14, fontFamily: fontForWeight('600'), color: colors.text }}>{label}</Text>
         <Muted size={12}>{formatMoney(current)} neste mês</Muted>
       </View>
       <Badge

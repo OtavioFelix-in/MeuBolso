@@ -13,6 +13,7 @@ import { formatMoney } from '../utils/money';
 import EventForm from '../components/EventForm';
 import { MoneyField } from '../components/fields';
 import { Badge, Button, Card, Divider, EmptyState, Header, IconBubble, Muted, ProgressBar, SectionTitle, Sheet } from '../components/ui';
+import { fontForWeight } from '../theme';
 
 const OUTCOME = {
   under: { label: 'Gastou menos que o planejado 🎉', color: 'income' },
@@ -43,7 +44,7 @@ export default function AgendaScreen() {
 
       <Card style={{ marginTop: 14 }}>
         <Muted>Planejado nos próximos eventos</Muted>
-        <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text, marginTop: 2 }}>{formatMoney(plannedTotal)}</Text>
+        <Text style={{ fontSize: 26, fontFamily: fontForWeight('800'), color: colors.text, marginTop: 2 }}>{formatMoney(plannedTotal)}</Text>
         <Muted size={12}>{upcoming.length} {upcoming.length === 1 ? 'evento à frente' : 'eventos à frente'}</Muted>
       </Card>
 
@@ -93,7 +94,7 @@ function EventCard({ ev, onEdit, onFinish }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconBubble emoji={ev.emoji} color={ev.done ? colors.textMuted : colors.primary} size={44} />
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{ev.name}</Text>
+          <Text style={{ fontSize: 16, fontFamily: fontForWeight('700'), color: colors.text }}>{ev.name}</Text>
           <Muted size={12}>{formatDate(ev.date)} · {when}</Muted>
         </View>
         {!ev.done ? <Badge label="planejar" color={colors.warning} /> : null}
@@ -104,12 +105,12 @@ function EventCard({ ev, onEdit, onFinish }) {
       <View style={{ flexDirection: 'row', marginTop: 12, gap: 12 }}>
         <View style={{ flex: 1 }}>
           <Muted size={11}>Planejado</Muted>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>{formatMoney(ev.planned_cents)}</Text>
+          <Text style={{ fontSize: 15, fontFamily: fontForWeight('800'), color: colors.text }}>{formatMoney(ev.planned_cents)}</Text>
         </View>
         {ev.done ? (
           <View style={{ flex: 1 }}>
             <Muted size={11}>Gasto real</Muted>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>{formatMoney(ev.spent_cents)}</Text>
+            <Text style={{ fontSize: 15, fontFamily: fontForWeight('800'), color: colors.text }}>{formatMoney(ev.spent_cents)}</Text>
           </View>
         ) : null}
       </View>
@@ -161,7 +162,7 @@ function FinishSheet({ event, onClose, onSaved }) {
         <View style={{ marginTop: 16, gap: 8 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Muted>Planejado</Muted>
-            <Text style={{ color: colors.text, fontWeight: '700' }}>{formatMoney(event.planned_cents)}</Text>
+            <Text style={{ color: colors.text, fontFamily: fontForWeight('700') }}>{formatMoney(event.planned_cents)}</Text>
           </View>
           {outcomeKey ? <Badge label={OUTCOME[outcomeKey].label} color={colors[OUTCOME[outcomeKey].color]} /> : null}
         </View>

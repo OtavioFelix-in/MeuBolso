@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Pressable, Text, View } from 'react-native';
 import { useApp } from '../app-context';
 import * as db from '../db';
-import { PAYMENT_METHODS } from '../theme';
+import { PAYMENT_METHODS, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { currentMonth, today } from '../utils/date';
 import { deleteReceipt, pickReceipt } from '../utils/receipts';
@@ -300,8 +300,8 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
           {form.receiptUri ? (
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <Image source={{ uri: form.receiptUri }} style={{ width: 66, height: 66, borderRadius: 12, backgroundColor: colors.cardAlt }} />
-              <Pressable onPress={handleReceipt}><Text style={{ color: colors.primary, fontWeight: '700' }}>Trocar</Text></Pressable>
-              <Pressable onPress={() => set({ receiptUri: null })}><Text style={{ color: colors.expense, fontWeight: '700' }}>Remover</Text></Pressable>
+              <Pressable onPress={handleReceipt}><Text style={{ color: colors.primary, fontFamily: fontForWeight('700') }}>Trocar</Text></Pressable>
+              <Pressable onPress={() => set({ receiptUri: null })}><Text style={{ color: colors.expense, fontFamily: fontForWeight('700') }}>Remover</Text></Pressable>
             </View>
           ) : (
             <Button title="Anexar imagem" icon="📎" variant="ghost" onPress={handleReceipt} />
@@ -335,7 +335,7 @@ function TypeCard({ title, subtitle, icon, active, onPress }) {
       }}
     >
       <Text style={{ fontSize: 18 }}>{icon}</Text>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: active ? colors.primary : colors.text, marginTop: 4 }}>{title}</Text>
+      <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: active ? colors.primary : colors.text, marginTop: 4 }}>{title}</Text>
       <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>{subtitle}</Text>
     </Pressable>
   );

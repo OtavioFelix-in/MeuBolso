@@ -9,6 +9,7 @@ import * as db from '../db';
 import { useTheme } from '../theme-context';
 import { CategoryForm } from './CatalogForms';
 import { Button, Card, Divider, IconBubble, Muted, SectionTitle } from './ui';
+import { fontForWeight } from '../theme';
 
 export default function CategoryManager({ kind, title = 'Categorias' }) {
   const { colors } = useTheme();
@@ -46,7 +47,7 @@ export default function CategoryManager({ kind, title = 'Categorias' }) {
                   ]}
                 >
                   <IconBubble emoji={cat.emoji} color={cat.color} size={38} />
-                  <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.text }}>{cat.name}</Text>
+                  <Text style={{ flex: 1, fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{cat.name}</Text>
                   <Muted size={12}>
                     {cat.subs.length > 0 ? `${cat.subs.length} sub` : 'sem sub'} {isOpen ? '▲' : '▼'}
                   </Muted>

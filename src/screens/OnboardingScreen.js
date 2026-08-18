@@ -12,6 +12,7 @@ import { authenticate, canUseLock, setLockEnabled } from '../security/auth';
 import { useTheme } from '../theme-context';
 import { MoneyField, StepperField, TextField } from '../components/fields';
 import { Button, ProgressBar } from '../components/ui';
+import { fontForWeight } from '../theme';
 
 // Índices dos passos (guardados em settings pra retomar de onde parou).
 const WELCOME = 0;
@@ -281,7 +282,7 @@ function Hero({ emoji, icon, title, subtitle }) {
       >
         {icon ?? <Text style={{ fontSize: 48 }}>{emoji}</Text>}
       </View>
-      <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text, textAlign: 'center' }}>{title}</Text>
+      <Text style={{ fontSize: 26, fontFamily: fontForWeight('800'), color: colors.text, textAlign: 'center' }}>{title}</Text>
       <Text style={{ fontSize: 15, color: colors.textMuted, textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
         {subtitle}
       </Text>
@@ -295,7 +296,7 @@ function Panel({ emoji, title, subtitle, children }) {
   return (
     <View>
       {emoji ? <Text style={{ fontSize: 40 }}>{emoji}</Text> : null}
-      <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginTop: emoji ? 12 : 0 }}>{title}</Text>
+      <Text style={{ fontSize: 24, fontFamily: fontForWeight('800'), color: colors.text, marginTop: emoji ? 12 : 0 }}>{title}</Text>
       {subtitle ? (
         <Text style={{ fontSize: 14, color: colors.textMuted, marginTop: 8, lineHeight: 21 }}>{subtitle}</Text>
       ) : null}
@@ -305,5 +306,5 @@ function Panel({ emoji, title, subtitle, children }) {
 }
 
 const styles = (colors) => ({
-  fieldLabel: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 7 },
+  fieldLabel: { fontSize: 13, fontFamily: fontForWeight('700'), color: colors.textMuted, marginBottom: 7 },
 });

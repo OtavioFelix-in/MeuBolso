@@ -10,6 +10,7 @@ import { lastMonths, monthLabel } from '../../utils/date';
 import { formatMoney } from '../../utils/money';
 import { CompareBars, Sparkline } from '../../components/charts';
 import { Card, Divider, EmptyState, IconBubble, Muted, SectionTitle } from '../../components/ui';
+import { fontForWeight } from '../../theme';
 
 export default function HabitsView() {
   const { colors } = useTheme();
@@ -67,7 +68,7 @@ export default function HabitsView() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <IconBubble emoji={row.cat.emoji} color={row.cat.color} size={38} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{row.cat.name}</Text>
+                    <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{row.cat.name}</Text>
                     <Text
                       style={{
                         fontSize: 12,
@@ -81,7 +82,7 @@ export default function HabitsView() {
                     </Text>
                   </View>
                   <Sparkline values={row.series.map((s) => s.total)} color={row.cat.color} />
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text, width: 92, textAlign: 'right' }}>
+                  <Text style={{ fontSize: 15, fontFamily: fontForWeight('700'), color: colors.text, width: 92, textAlign: 'right' }}>
                     {formatMoney(row.current)}
                   </Text>
                 </View>

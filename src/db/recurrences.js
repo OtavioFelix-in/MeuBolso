@@ -120,9 +120,11 @@ export function setRecurrenceActive(id, active) {
   }
 }
 
-// Gera os lançamentos previstos do mês para as recorrências ativas.
-// É idempotente: rodar de novo no mesmo mês não duplica nada.
-export function materializeMonth(month) {
+// Gera os lançamentos previstos do mês pras recorrências ativas, sem abrir
+// transação própria — pra poder ser chamada de dentro de outra transação
+// (ex.: openMonth, que precisa marcar o mês aberto e materializar como uma
+// coisa só). É idempotente: rodar de novo no mesmo mês não duplica nada.
+export function materializeMonthTx(month) {
   const recs = db.getAllSync(
     `SELECT * FROM recurrences
      WHERE deleted = 0 AND active = 1
@@ -132,36 +134,44 @@ export function materializeMonth(month) {
   );
 
   const created = [];
-  db.withTransactionSync(() => {
-    for (const rec of recs) {
-      // Recorrência anual só cai no mesmo mês do ano em que começou.
-      if (rec.period === 'annual') {
-        const annualMonth = (rec.start_month ?? month).slice(5, 7);
-        if (month.slice(5, 7) !== annualMonth) continue;
-      }
-
-      const exists = db.getFirstSync(
-        `SELECT id FROM transactions
-         WHERE deleted = 0 AND recurrence_id = ? AND substr(date, 1, 7) = ?`,
-        [rec.id, month]
-      );
-      if (exists) continue;
-
-      created.push(
-        saveTransaction({
-          kind: rec.kind,
-          amountCents: rec.amount_cents,
-          date: dueDateFor(month, rec.due_day),
-          categoryId: rec.category_id,
-          accountId: rec.account_id,
-          paymentMethod: rec.payment_method,
-          cardId: rec.card_id,
-          description: rec.name,
-          paid: 0,
-          recurrenceId: rec.id,
-        })
-      );
+  for (const rec of recs) {
+    // Recorrência anual só cai no mesmo mês do ano em que começou.
+    if (rec.period === 'annual') {
+      const annualMonth = (rec.start_month ?? month).slice(5, 7);
+      if (month.slice(5, 7) !== annualMonth) continue;
     }
+
+    const exists = db.getFirstSync(
+      `SELECT id FROM transactions
+       WHERE deleted = 0 AND recurrence_id = ? AND substr(date, 1, 7) = ?`,
+      [rec.id, month]
+    );
+    if (exists) continue;
+
+    created.push(
+      saveTransaction({
+        kind: rec.kind,
+        amountCents: rec.amount_cents,
+        date: dueDateFor(month, rec.due_day),
+        categoryId: rec.category_id,
+        accountId: rec.account_id,
+        paymentMethod: rec.payment_method,
+        cardId: rec.card_id,
+        description: rec.name,
+        paid: 0,
+        recurrenceId: rec.id,
+      })
+    );
+  }
+  return created;
+}
+
+// Mesma coisa, mas abrindo a própria transação — pra quem chama de fora
+// (materializeOpenMonths, telas) sem já estar dentro de uma.
+export function materializeMonth(month) {
+  let created;
+  db.withTransactionSync(() => {
+    created = materializeMonthTx(month);
   });
   return created;
 }

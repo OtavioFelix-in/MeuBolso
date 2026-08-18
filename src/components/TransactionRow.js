@@ -6,6 +6,7 @@ import { categoryLabel } from '../db/transactions';
 import { useTheme } from '../theme-context';
 import { formatMoney } from '../utils/money';
 import { IconBubble } from './ui';
+import { fontForWeight } from '../theme';
 
 export default function TransactionRow({ tx, onPress, onTogglePaid, showDate }) {
   const { colors } = useTheme();
@@ -31,7 +32,7 @@ export default function TransactionRow({ tx, onPress, onTogglePaid, showDate }) 
       <IconBubble emoji={category.emoji} color={category.color} />
 
       <View style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
+        <Text numberOfLines={1} style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>
           {tx.description || category.full}
         </Text>
         <Text numberOfLines={1} style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
@@ -44,7 +45,7 @@ export default function TransactionRow({ tx, onPress, onTogglePaid, showDate }) 
         <Text
           style={{
             fontSize: 15,
-            fontWeight: '700',
+            fontFamily: fontForWeight('700'),
             color: pending ? colors.textMuted : isIncome ? colors.income : colors.text,
           }}
         >
@@ -63,7 +64,7 @@ export default function TransactionRow({ tx, onPress, onTogglePaid, showDate }) 
               backgroundColor: colors.primaryLight,
             }}
           >
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+            <Text style={{ fontSize: 11, fontFamily: fontForWeight('700'), color: colors.primary }}>
               {isIncome ? 'recebi ✓' : 'paguei ✓'}
             </Text>
           </Pressable>

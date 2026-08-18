@@ -12,6 +12,7 @@ import { formatMoney } from '../utils/money';
 import MonthSwitcher from '../components/MonthSwitcher';
 import SalarySheet from '../components/SalarySheet';
 import { Badge, Button, Card, EmptyState, Header, Muted, SectionTitle } from '../components/ui';
+import { fontForWeight } from '../theme';
 
 export default function MesesScreen() {
   const { colors } = useTheme();
@@ -104,7 +105,7 @@ export default function MesesScreen() {
           <Card style={{ width: cardWidth }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{monthLabel(m.month, { full: true })}</Text>
+                <Text style={{ fontSize: 16, fontFamily: fontForWeight('700'), color: colors.text }}>{monthLabel(m.month, { full: true })}</Text>
                 <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                   {m.isCurrent ? <Badge label="mês atual" color={colors.primary} /> : null}
                   <Badge label={m.open ? 'aberto' : 'previsto'} color={m.open ? colors.income : colors.textMuted} />
@@ -112,7 +113,7 @@ export default function MesesScreen() {
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontSize: 11, color: colors.textMuted }}>{m.open ? 'resultado' : 'previsto'}</Text>
-                <Text style={{ fontSize: 17, fontWeight: '800', color: m.leftover >= 0 ? colors.income : colors.expense }}>{formatMoney(m.leftover)}</Text>
+                <Text style={{ fontSize: 17, fontFamily: fontForWeight('800'), color: m.leftover >= 0 ? colors.income : colors.expense }}>{formatMoney(m.leftover)}</Text>
               </View>
             </View>
 
@@ -184,7 +185,7 @@ function Mini({ label, value, color }) {
   return (
     <View style={{ flex: 1 }}>
       <Text style={{ fontSize: 11, color: colors.textMuted }}>{label}</Text>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: color ?? colors.text, marginTop: 1 }} numberOfLines={1} adjustsFontSizeToFit>{formatMoney(value)}</Text>
+      <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: color ?? colors.text, marginTop: 1 }} numberOfLines={1} adjustsFontSizeToFit>{formatMoney(value)}</Text>
     </View>
   );
 }

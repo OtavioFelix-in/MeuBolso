@@ -11,6 +11,7 @@ import MonthSwitcher from '../components/MonthSwitcher';
 import AnswersView from './reports/AnswersView';
 import HabitsView from './reports/HabitsView';
 import ProfileView from './reports/ProfileView';
+import { fontForWeight } from '../theme';
 
 const VIEWS = [
   { key: 'answers', label: 'Resumo' },
@@ -57,7 +58,7 @@ function InsightsSection() {
     <View style={{ marginTop: 16, gap: 10 }}>
       {insights.map((item) => (
         <Card key={item.id} style={{ borderLeftWidth: 3, borderLeftColor: colors[INSIGHT_COLOR[item.type]] }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
+          <Text style={{ fontSize: 13, fontFamily: fontForWeight('700'), color: colors.text }}>
             {item.emoji} {item.title}
           </Text>
           <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4, lineHeight: 18 }}>{item.text}</Text>

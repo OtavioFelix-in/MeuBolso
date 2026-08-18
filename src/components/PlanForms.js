@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as db from '../db';
-import { ASSET_TYPES, CHART_COLORS, INVESTMENT_TYPES } from '../theme';
+import { ASSET_TYPES, CHART_COLORS, INVESTMENT_TYPES, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { today } from '../utils/date';
 import { formatMoney } from '../utils/money';
@@ -104,7 +104,7 @@ export function GoalForm({ visible, onClose, onSaved, goal }) {
       </Field>
 
       {form.deadline ? (
-        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12, marginBottom: 8 }} onPress={() => set({ deadline: null })}>
+        <Text style={{ color: colors.primary, fontFamily: fontForWeight('700'), fontSize: 12, marginBottom: 8 }} onPress={() => set({ deadline: null })}>
           Remover prazo
         </Text>
       ) : null}

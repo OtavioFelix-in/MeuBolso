@@ -12,6 +12,7 @@ import { dueLabel, formatDate, monthLabel } from '../utils/date';
 import { formatMoney } from '../utils/money';
 import InstallmentForm from '../components/InstallmentForm';
 import { Badge, Button, Card, Divider, EmptyState, Header, IconBubble, Muted, ProgressBar, SectionTitle, Sheet } from '../components/ui';
+import { fontForWeight } from '../theme';
 
 export default function ParcelamentosScreen() {
   const { colors } = useTheme();
@@ -38,7 +39,7 @@ export default function ParcelamentosScreen() {
 
       <Card style={{ marginTop: 14 }}>
         <Muted>Falta pagar (dentro do seu saldo)</Muted>
-        <Text style={{ fontSize: 26, fontWeight: '800', color: colors.expense, marginTop: 2 }}>
+        <Text style={{ fontSize: 26, fontFamily: fontForWeight('800'), color: colors.expense, marginTop: 2 }}>
           {formatMoney(forecast.total_cents)}
         </Text>
         <Muted size={12}>{forecast.parcels} {forecast.parcels === 1 ? 'parcela em aberto' : 'parcelas em aberto'}</Muted>
@@ -54,7 +55,7 @@ export default function ParcelamentosScreen() {
                   <View style={{ flex: 1 }}>
                     <ProgressBar percent={(row.total_cents / max) * 100} color={colors.expense} height={7} />
                   </View>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, width: 84, textAlign: 'right' }}>
+                  <Text style={{ fontSize: 12, fontFamily: fontForWeight('700'), color: colors.text, width: 84, textAlign: 'right' }}>
                     {formatMoney(row.total_cents)}
                   </Text>
                 </View>
@@ -92,7 +93,7 @@ export default function ParcelamentosScreen() {
                 <Pressable onPress={() => setDetail(item)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 }}>
                   <IconBubble emoji="✅" color={colors.income} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{item.description}</Text>
+                    <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{item.description}</Text>
                     <Muted size={12}>{item.count}x · quitada</Muted>
                   </View>
                   <Muted size={13}>{formatMoney(item.total_cents)}</Muted>
@@ -130,7 +131,7 @@ function InstallmentCard({ item, month, onPress }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconBubble emoji={item.parent_emoji ?? item.category_emoji ?? '💳'} color={item.parent_color ?? item.category_color ?? colors.expense} />
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{item.description}</Text>
+          <Text style={{ fontSize: 16, fontFamily: fontForWeight('700'), color: colors.text }}>{item.description}</Text>
           <Muted size={12}>
             {formatMoney(item.total_cents)} · {item.count}x de {formatMoney(Math.round(item.total_cents / item.count))}
           </Muted>
@@ -165,7 +166,7 @@ function Info({ label, value }) {
   return (
     <View style={{ width: '50%', paddingVertical: 5 }}>
       <Text style={{ fontSize: 11, color: colors.textMuted }}>{label}</Text>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginTop: 1 }}>{value}</Text>
+      <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: colors.text, marginTop: 1 }}>{value}</Text>
     </View>
   );
 }
@@ -191,10 +192,10 @@ function DetailSheet({ detail, onClose, onEdit, onRefresh }) {
       {parcels.map((parcel) => (
         <View key={parcel.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontWeight: '600' }}>Parcela {parcel.installment_no}/{parcel.installment_total}</Text>
+            <Text style={{ color: colors.text, fontFamily: fontForWeight('600') }}>Parcela {parcel.installment_no}/{parcel.installment_total}</Text>
             <Muted size={12}>{formatDate(parcel.date)} · {parcel.paid ? 'paga' : dueLabel(parcel.date)}</Muted>
           </View>
-          <Text style={{ color: parcel.paid ? colors.textMuted : colors.text, fontWeight: '700', marginRight: 10 }}>
+          <Text style={{ color: parcel.paid ? colors.textMuted : colors.text, fontFamily: fontForWeight('700'), marginRight: 10 }}>
             {formatMoney(parcel.amount_cents)}
           </Text>
           {!parcel.paid ? (
@@ -203,10 +204,10 @@ function DetailSheet({ detail, onClose, onEdit, onRefresh }) {
               hitSlop={8}
               style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 9, backgroundColor: colors.primaryLight }}
             >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>paguei ✓</Text>
+              <Text style={{ fontSize: 11, fontFamily: fontForWeight('700'), color: colors.primary }}>paguei ✓</Text>
             </Pressable>
           ) : (
-            <Text style={{ color: colors.income, fontWeight: '800' }}>✓</Text>
+            <Text style={{ color: colors.income, fontFamily: fontForWeight('800') }}>✓</Text>
           )}
         </View>
       ))}

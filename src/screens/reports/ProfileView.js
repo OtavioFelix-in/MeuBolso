@@ -10,6 +10,7 @@ import { monthShort } from '../../utils/date';
 import { formatMoney, formatPercent } from '../../utils/money';
 import { LineChart } from '../../components/charts';
 import { Badge, Card, Muted, ProgressBar, SectionTitle } from '../../components/ui';
+import { fontForWeight } from '../../theme';
 
 export default function ProfileView() {
   const { colors } = useTheme();
@@ -40,7 +41,7 @@ export default function ProfileView() {
     <>
       <Card style={{ marginTop: 14 }}>
         <Muted>Patrimônio total</Muted>
-        <Text style={{ fontSize: 30, fontWeight: '800', color: colors.text, marginTop: 2 }}>
+        <Text style={{ fontSize: 30, fontFamily: fontForWeight('800'), color: colors.text, marginTop: 2 }}>
           {formatMoney(worth.total)}
         </Text>
         <View style={{ marginTop: 14 }}>
@@ -52,7 +53,7 @@ export default function ProfileView() {
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Text style={{ fontSize: 26 }}>{stage.emoji}</Text>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: '800', color: colors.text }}>{stage.title}</Text>
+          <Text style={{ fontFamily: fontForWeight('800'), color: colors.text }}>{stage.title}</Text>
           <Muted size={12} style={{ marginTop: 2 }}>
             {stage.text}
           </Muted>
@@ -63,7 +64,7 @@ export default function ProfileView() {
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text }}>
+            <Text style={{ fontSize: 24, fontFamily: fontForWeight('800'), color: colors.text }}>
               {profile.emergencyMonths.toFixed(1)} meses
             </Text>
             <Muted size={12}>de despesa essencial cobertos pelo seu dinheiro de liquidez imediata</Muted>
@@ -141,7 +142,7 @@ function Indicator({ label, value, emoji, color }) {
   return (
     <Card style={{ width: '47.5%', flexGrow: 1 }}>
       <Text style={{ fontSize: 15 }}>{emoji}</Text>
-      <Text style={{ fontSize: 18, fontWeight: '800', color, marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>
+      <Text style={{ fontSize: 18, fontFamily: fontForWeight('800'), color, marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
       <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{label}</Text>
@@ -155,11 +156,11 @@ function Composition({ label, value, total, color }) {
   return (
     <View style={{ marginBottom: 12 }}>
       <View style={{ flexDirection: 'row', marginBottom: 6 }}>
-        <Text style={{ flex: 1, fontSize: 13, color: colors.text, fontWeight: '600' }}>{label}</Text>
+        <Text style={{ flex: 1, fontSize: 13, color: colors.text, fontFamily: fontForWeight('600') }}>{label}</Text>
         <Muted size={12} style={{ marginRight: 8 }}>
           {percent.toFixed(0)}%
         </Muted>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{formatMoney(value)}</Text>
+        <Text style={{ fontSize: 13, fontFamily: fontForWeight('700'), color: colors.text }}>{formatMoney(value)}</Text>
       </View>
       <ProgressBar percent={percent} color={color} height={7} />
     </View>

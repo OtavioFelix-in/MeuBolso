@@ -5,7 +5,7 @@
 
 import { addMonths, currentMonth } from '../utils/date';
 import { db, getSetting, nowIso, setSetting } from './core';
-import { getRecurrencesForMonth, materializeMonth } from './recurrences';
+import { getRecurrencesForMonth, materializeMonth, materializeMonthTx } from './recurrences';
 
 export function isMonthOpen(month) {
   return !!db.getFirstSync('SELECT month FROM open_months WHERE month = ?', [month]);
@@ -16,9 +16,13 @@ export function getOpenMonths() {
 }
 
 // Abrir o mês: marca como aberto e materializa contas fixas + salário nele.
+// Uma transação só — se materializar falhar, o mês não fica marcado como
+// aberto sem os lançamentos previstos.
 export function openMonth(month) {
-  db.runSync('INSERT OR IGNORE INTO open_months (month, opened_at) VALUES (?, ?)', [month, nowIso()]);
-  materializeMonth(month);
+  db.withTransactionSync(() => {
+    db.runSync('INSERT OR IGNORE INTO open_months (month, opened_at) VALUES (?, ?)', [month, nowIso()]);
+    materializeMonthTx(month);
+  });
   return true;
 }
 

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import * as db from '../db';
 import { useTheme } from '../theme-context';
+import { fontForWeight } from '../theme';
 
 export default function TipCard({ tipKey, emoji, title, text, style }) {
   const { colors } = useTheme();
@@ -36,7 +37,7 @@ export default function TipCard({ tipKey, emoji, title, text, style }) {
     >
       <Text style={{ fontSize: 22 }}>{emoji}</Text>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>{title}</Text>
+        <Text style={{ fontSize: 14, fontFamily: fontForWeight('800'), color: colors.text }}>{title}</Text>
         <Text style={{ fontSize: 13, color: colors.text, opacity: 0.75, marginTop: 4, lineHeight: 19 }}>{text}</Text>
       </View>
       <Pressable onPress={dismiss} hitSlop={10}>

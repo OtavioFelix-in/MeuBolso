@@ -17,6 +17,7 @@ import Svg, {
 import { useTheme } from '../theme-context';
 import { monthShort } from '../utils/date';
 import { formatMoney } from '../utils/money';
+import { fontForWeight } from '../theme';
 
 function useWidth() {
   const [width, setWidth] = useState(0);
@@ -72,8 +73,8 @@ export function DonutChart({ data, size = 190, thickness = 26, centerLabel, cent
         </G>
       </Svg>
       <View style={{ position: 'absolute', top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>{centerLabel}</Text>
-        <Text style={{ fontSize: 19, color: colors.text, fontWeight: '800' }}>{centerValue}</Text>
+        <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: fontForWeight('600') }}>{centerLabel}</Text>
+        <Text style={{ fontSize: 19, color: colors.text, fontFamily: fontForWeight('800') }}>{centerValue}</Text>
       </View>
     </View>
   );
@@ -100,14 +101,14 @@ export function DonutLegend({ data, onPress, max = 6 }) {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
         >
           <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: row.color }} />
-          <Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 14, fontWeight: '600' }}>
+          <Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: fontForWeight('600') }}>
             {row.emoji ? `${row.emoji} ` : ''}
             {row.name}
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 12, width: 42, textAlign: 'right' }}>
             {total > 0 ? `${Math.round((row.value / total) * 100)}%` : '0%'}
           </Text>
-          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>
+          <Text style={{ color: colors.text, fontSize: 14, fontFamily: fontForWeight('700') }}>
             {formatMoney(row.value)}
           </Text>
         </Pressable>
@@ -274,8 +275,8 @@ export function CompareBars({ rows, color }) {
       {rows.map((row) => (
         <View key={row.label} style={{ gap: 5 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{row.label}</Text>
-            <Text style={{ color: row.value > 0 ? colors.text : colors.textMuted, fontSize: 13, fontWeight: '700' }}>
+            <Text style={{ color: colors.text, fontSize: 13, fontFamily: fontForWeight('600') }}>{row.label}</Text>
+            <Text style={{ color: row.value > 0 ? colors.text : colors.textMuted, fontSize: 13, fontFamily: fontForWeight('700') }}>
               {formatMoney(row.value)}
             </Text>
           </View>

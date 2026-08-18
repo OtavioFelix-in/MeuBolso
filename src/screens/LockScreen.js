@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme-context';
 import { Button } from '../components/ui';
 import { authenticate } from '../security/auth';
+import { fontForWeight } from '../theme';
 
 export default function LockScreen({ onUnlock }) {
   const { colors } = useTheme();
@@ -41,7 +42,7 @@ export default function LockScreen({ onUnlock }) {
       >
         <Text style={{ fontSize: 44 }}>🔒</Text>
       </View>
-      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
+      <Text style={{ fontSize: 22, fontFamily: fontForWeight('800'), color: colors.text, textAlign: 'center' }}>
         Meu Bolso está bloqueado
       </Text>
       <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', marginTop: 10, lineHeight: 21 }}>

@@ -2,7 +2,6 @@
 // ativo, então trocar claro/escuro não precisa de nenhuma gambiarra por tela.
 
 import { Feather } from '@expo/vector-icons';
-import { useRef } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -15,18 +14,10 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useTapAnim } from '../hooks/useTapAnim';
 import { useTheme } from '../theme-context';
 import { FONT_FAMILY, RADIUS, TABULAR_NUMS, fontForWeight } from '../theme';
 import { formatMoney } from '../utils/money';
-
-// Encolhe levemente no toque e volta com uma mola — resposta tátil em todo
-// componente tocável do app, sem precisar de lib nova (Animated é do RN).
-function useTapAnim(scaleTo = 0.96) {
-  const scale = useRef(new Animated.Value(1)).current;
-  const onPressIn = () => Animated.spring(scale, { toValue: scaleTo, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
-  const onPressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 6 }).start();
-  return { scale, onPressIn, onPressOut };
-}
 
 // ---- Cartão ----
 

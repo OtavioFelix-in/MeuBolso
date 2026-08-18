@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useApp } from '../app-context';
 import * as db from '../db';
-import { INVESTMENT_TYPES } from '../theme';
+import { INVESTMENT_TYPES, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { formatDate, monthLabel } from '../utils/date';
 import { formatMoney, formatPercent } from '../utils/money';
@@ -74,7 +74,7 @@ function AccountView() {
     <>
       <Card style={{ marginTop: 14 }}>
         <Muted>Saldo em conta</Muted>
-        <Text style={{ fontSize: 28, fontWeight: '800', color: colors.primary, marginTop: 2 }}>{formatMoney(total)}</Text>
+        <Text style={{ fontSize: 28, fontFamily: fontForWeight('800'), color: colors.primary, marginTop: 2 }}>{formatMoney(total)}</Text>
         <Muted size={12} style={{ marginTop: 4 }}>somando todas as suas contas</Muted>
       </Card>
 
@@ -85,7 +85,7 @@ function AccountView() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <IconBubble emoji="💼" color={colors.income} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
+            <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>
               {salary.configured && salary.cents > 0 ? `Salário: ${formatMoney(salary.cents)}` : 'Configurar salário'}
             </Text>
             <Muted size={12}>
@@ -94,7 +94,7 @@ function AccountView() {
                 : 'Entra automático todo mês, sem precisar lançar na mão.'}
             </Muted>
           </View>
-          <Text style={{ color: colors.primary, fontWeight: '700' }}>{salary.configured ? 'editar' : 'definir'}</Text>
+          <Text style={{ color: colors.primary, fontFamily: fontForWeight('700') }}>{salary.configured ? 'editar' : 'definir'}</Text>
         </View>
       </Card>
 
@@ -113,10 +113,10 @@ function AccountView() {
               <Pressable onPress={() => { setEditing(a); setFormOpen(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 }}>
                 <IconBubble emoji={a.emoji} color={a.color} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{a.name}</Text>
+                  <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{a.name}</Text>
                   <Muted size={12}>saldo inicial {formatMoney(a.initial_cents)}</Muted>
                 </View>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: a.balance_cents >= 0 ? colors.text : colors.expense }}>
+                <Text style={{ fontSize: 15, fontFamily: fontForWeight('700'), color: a.balance_cents >= 0 ? colors.text : colors.expense }}>
                   {formatMoney(a.balance_cents)}
                 </Text>
               </Pressable>
@@ -159,10 +159,10 @@ function AccountView() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 }}>
                   <IconBubble emoji={t.kind === 'income' ? '📥' : '📤'} color={t.kind === 'income' ? colors.income : colors.expense} size={36} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }} numberOfLines={1}>{t.description || t.category_name || 'Movimentação'}</Text>
+                    <Text style={{ fontSize: 14, fontFamily: fontForWeight('600'), color: colors.text }} numberOfLines={1}>{t.description || t.category_name || 'Movimentação'}</Text>
                     <Muted size={11}>{formatDate(t.date)} · {t.account_name}</Muted>
                   </View>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: t.kind === 'income' ? colors.income : colors.text }}>
+                  <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: t.kind === 'income' ? colors.income : colors.text }}>
                     {t.kind === 'income' ? '+' : '-'}{formatMoney(t.amount_cents)}
                   </Text>
                 </View>
@@ -186,7 +186,7 @@ function SplitStat({ label, value, percent, color }) {
         <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: color }} />
         <Text style={{ fontSize: 12, color: colors.textMuted }}>{label}</Text>
       </View>
-      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, marginTop: 3 }}>{formatMoney(value)}</Text>
+      <Text style={{ fontSize: 16, fontFamily: fontForWeight('800'), color: colors.text, marginTop: 3 }}>{formatMoney(value)}</Text>
       <Muted size={11}>{percent.toFixed(0)}%</Muted>
     </View>
   );
@@ -214,7 +214,7 @@ function InvestmentsView() {
     <>
       <Card style={{ marginTop: 14 }}>
         <Muted>Carteira hoje</Muted>
-        <Text style={{ fontSize: 28, fontWeight: '800', color: colors.invest, marginTop: 2 }}>{formatMoney(totals.current)}</Text>
+        <Text style={{ fontSize: 28, fontFamily: fontForWeight('800'), color: colors.invest, marginTop: 2 }}>{formatMoney(totals.current)}</Text>
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
           <Stat label="Investido" value={formatMoney(totals.invested)} />
           <Stat label="Lucro" value={`${profit >= 0 ? '+' : '-'}${formatMoney(Math.abs(profit))}`} color={profit >= 0 ? colors.income : colors.expense} />
@@ -247,12 +247,12 @@ function InvestmentsView() {
               <Pressable onPress={() => { setEditing(inv); setFormOpen(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <IconBubble emoji={type?.emoji ?? '📦'} color={inv.color} size={44} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{inv.name}</Text>
+                  <Text style={{ fontSize: 16, fontFamily: fontForWeight('700'), color: colors.text }}>{inv.name}</Text>
                   <Muted size={12}>{type?.label ?? 'Investimento'} · {inv.share_percent.toFixed(0)}% da carteira</Muted>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{formatMoney(inv.current_cents)}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: inv.profit_cents >= 0 ? colors.income : colors.expense }}>
+                  <Text style={{ fontSize: 16, fontFamily: fontForWeight('800'), color: colors.text }}>{formatMoney(inv.current_cents)}</Text>
+                  <Text style={{ fontSize: 12, fontFamily: fontForWeight('700'), color: inv.profit_cents >= 0 ? colors.income : colors.expense }}>
                     {inv.profit_cents >= 0 ? '▲' : '▼'} {formatPercent(Math.abs(inv.profit_percent), 1)}
                   </Text>
                 </View>
@@ -300,7 +300,7 @@ function CardsView() {
     <>
       <Card style={{ marginTop: 14 }}>
         <Muted>Em aberto nos cartões</Muted>
-        <Text style={{ fontSize: 28, fontWeight: '800', color: colors.invest, marginTop: 2 }}>{formatMoney(totalOpen)}</Text>
+        <Text style={{ fontSize: 28, fontFamily: fontForWeight('800'), color: colors.invest, marginTop: 2 }}>{formatMoney(totalOpen)}</Text>
         <Muted size={12} style={{ marginTop: 4 }}>somando o que ainda não foi pago</Muted>
       </Card>
 
@@ -315,11 +315,11 @@ function CardsView() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <IconBubble emoji="💳" color={c.color} size={44} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{c.name}</Text>
+                <Text style={{ fontSize: 16, fontFamily: fontForWeight('700'), color: colors.text }}>{c.name}</Text>
                 <Muted size={12}>limite {formatMoney(c.limit_cents)}{c.due_day ? ` · vence dia ${c.due_day}` : ''}</Muted>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>{formatMoney(c.available_cents)}</Text>
+                <Text style={{ fontSize: 15, fontFamily: fontForWeight('800'), color: colors.text }}>{formatMoney(c.available_cents)}</Text>
                 <Muted size={11}>disponível</Muted>
               </View>
             </View>
@@ -341,8 +341,8 @@ function CardsView() {
         <Card style={{ marginTop: 4 }}>
           <Muted size={13}>
             Em {monthLabel(month)} você concentrou{' '}
-            <Text style={{ color: colors.text, fontWeight: '700' }}>{split.card_percent.toFixed(0)}%</Text> dos gastos no cartão e{' '}
-            <Text style={{ color: colors.text, fontWeight: '700' }}>{split.account_percent.toFixed(0)}%</Text> na conta corrente.
+            <Text style={{ color: colors.text, fontFamily: fontForWeight('700') }}>{split.card_percent.toFixed(0)}%</Text> dos gastos no cartão e{' '}
+            <Text style={{ color: colors.text, fontFamily: fontForWeight('700') }}>{split.account_percent.toFixed(0)}%</Text> na conta corrente.
           </Muted>
         </Card>
       ) : null}
@@ -366,7 +366,7 @@ function AssetsView() {
     <>
       <Card style={{ marginTop: 14 }}>
         <Muted>Patrimônio total</Muted>
-        <Text style={{ fontSize: 30, fontWeight: '800', color: colors.text, marginTop: 2 }}>{formatMoney(worth.total)}</Text>
+        <Text style={{ fontSize: 30, fontFamily: fontForWeight('800'), color: colors.text, marginTop: 2 }}>{formatMoney(worth.total)}</Text>
         <Muted size={12} style={{ marginTop: 4 }}>saldo + investimentos + bens</Muted>
       </Card>
 
@@ -384,10 +384,10 @@ function AssetsView() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <IconBubble emoji={asset.emoji} color={colors.income} size={44} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{asset.name}</Text>
+                  <Text style={{ fontSize: 16, fontFamily: fontForWeight('700'), color: colors.text }}>{asset.name}</Text>
                   {asset.acquired_at ? <Muted size={12}>desde {formatDate(asset.acquired_at)}</Muted> : null}
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{formatMoney(asset.value_cents)}</Text>
+                <Text style={{ fontSize: 16, fontFamily: fontForWeight('800'), color: colors.text }}>{formatMoney(asset.value_cents)}</Text>
               </View>
               {hasPurchase ? (
                 <View style={{ flexDirection: 'row', marginTop: 12 }}>
@@ -410,8 +410,8 @@ function Stat({ label, value, color }) {
   const { colors } = useTheme();
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>{label}</Text>
-      <Text style={{ fontSize: 14, fontWeight: '800', color: color ?? colors.text, marginTop: 2 }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      <Text style={{ fontSize: 11, color: colors.textMuted, fontFamily: fontForWeight('600') }}>{label}</Text>
+      <Text style={{ fontSize: 14, fontFamily: fontForWeight('800'), color: color ?? colors.text, marginTop: 2 }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
     </View>
   );
 }
@@ -421,7 +421,7 @@ function Info({ label, value, color }) {
   return (
     <View style={{ flex: 1 }}>
       <Text style={{ fontSize: 11, color: colors.textMuted }}>{label}</Text>
-      <Text style={{ fontSize: 13, fontWeight: '700', color: color ?? colors.text, marginTop: 1 }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      <Text style={{ fontSize: 13, fontFamily: fontForWeight('700'), color: color ?? colors.text, marginTop: 1 }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
     </View>
   );
 }

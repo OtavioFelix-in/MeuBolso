@@ -1,5 +1,6 @@
 // Gera os ícones do app a partir da nova arte (assets/source-icon.png).
 // Roda uma vez, não faz parte do build normal.
+// Rodar: node make-icons.js  (precisa do sharp: npm install --no-save sharp)
 const sharp = require('sharp');
 const path = require('path');
 

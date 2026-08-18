@@ -34,8 +34,7 @@ export function importAll(backup) {
     throw new Error('Arquivo de backup inválido');
   }
 
-  db.execSync('BEGIN');
-  try {
+  db.withTransactionSync(() => {
     for (const table of TABLES) {
       db.runSync(`DELETE FROM ${table}`);
       for (const row of data[table] ?? []) {
@@ -46,11 +45,7 @@ export function importAll(backup) {
         );
       }
     }
-    db.execSync('COMMIT');
-  } catch (e) {
-    db.execSync('ROLLBACK');
-    throw e;
-  }
+  });
 }
 
 // Planilha de lançamentos pra abrir no Excel/Sheets.

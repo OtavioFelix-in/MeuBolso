@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useApp } from '../app-context';
 import * as db from '../db';
-import { BRAND_GRADIENT, BRAND_GRADIENT_ANGLE, FONT_FAMILY, RADIUS } from '../theme';
+import { BRAND_GRADIENT, BRAND_GRADIENT_ANGLE, FONT_FAMILY, RADIUS, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { dueLabel, monthLabel, today } from '../utils/date';
 import { formatMoney } from '../utils/money';
@@ -94,7 +94,7 @@ export default function DashboardScreen({ onOpenSettings }) {
 
         <Card style={{ marginTop: 14, alignItems: 'center' }}>
           <Text style={{ fontSize: 40 }}>🔒</Text>
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginTop: 8, textAlign: 'center' }}>
+          <Text style={{ fontSize: 18, fontFamily: fontForWeight('800'), color: colors.text, marginTop: 8, textAlign: 'center' }}>
             {monthLabel(month, { full: true })} ainda não foi aberto
           </Text>
           <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 19 }}>
@@ -168,7 +168,7 @@ export default function DashboardScreen({ onOpenSettings }) {
           <Muted size={12}>mês aberto</Muted>
         </View>
         <Pressable onPress={handleCloseMonth} hitSlop={8}>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>🔒 fechar mês</Text>
+          <Text style={{ fontSize: 12, fontFamily: fontForWeight('700'), color: colors.textMuted }}>🔒 fechar mês</Text>
         </Pressable>
       </View>
 
@@ -261,7 +261,7 @@ export default function DashboardScreen({ onOpenSettings }) {
                   >
                     <IconBubble emoji={tx.category_emoji ?? '🔔'} color={late ? colors.expense : colors.warning} />
                     <View style={{ flex: 1 }}>
-                      <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
+                      <Text numberOfLines={1} style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>
                         {tx.description || tx.category_name || 'Lançamento'}
                       </Text>
                       <Text style={{ fontSize: 12, color: late ? colors.expense : colors.textMuted, marginTop: 2 }}>
@@ -317,7 +317,7 @@ export default function DashboardScreen({ onOpenSettings }) {
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 6 }}>
           <View style={{ flex: 1 }}>
             <Muted>hoje</Muted>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text }}>{mask(formatMoney(worth.total))}</Text>
+            <Text style={{ fontSize: 22, fontFamily: fontForWeight('800'), color: colors.text }}>{mask(formatMoney(worth.total))}</Text>
           </View>
           {worthSeries.length > 1 ? <Trend series={worthSeries} /> : null}
         </View>
@@ -331,8 +331,8 @@ function ProjRow({ label, value, color, strong }) {
   const { colors } = useTheme();
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Text style={{ fontSize: strong ? 15 : 13, color: colors.text, fontWeight: strong ? '800' : '500' }}>{label}</Text>
-      <Text style={{ fontSize: strong ? 17 : 14, fontWeight: '800', color: color ?? colors.text }}>{value}</Text>
+      <Text style={{ fontSize: strong ? 15 : 13, color: colors.text, fontFamily: fontForWeight(strong ? '800' : '500') }}>{label}</Text>
+      <Text style={{ fontSize: strong ? 17 : 14, fontFamily: fontForWeight('800'), color: color ?? colors.text }}>{value}</Text>
     </View>
   );
 }
@@ -355,7 +355,7 @@ function ShortcutCard({ emoji, label, hint, onPress, tint }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <IconBubble emoji={emoji} color={tint ?? colors.primary} size={38} />
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{label}</Text>
+          <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: colors.text }}>{label}</Text>
           <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }} numberOfLines={1}>
             {hint}
           </Text>
@@ -384,7 +384,7 @@ function Trend({ series }) {
   const up = delta >= 0;
   return (
     <View style={{ alignItems: 'flex-end' }}>
-      <Text style={{ color: up ? colors.income : colors.expense, fontWeight: '800', fontSize: 15 }}>
+      <Text style={{ color: up ? colors.income : colors.expense, fontFamily: fontForWeight('800'), fontSize: 15 }}>
         {up ? '▲' : '▼'} {Math.abs(percent).toFixed(0)}%
       </Text>
       <Text style={{ color: colors.textMuted, fontSize: 11 }}>em {series.length} meses</Text>

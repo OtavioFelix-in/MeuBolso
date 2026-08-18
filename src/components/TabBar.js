@@ -2,17 +2,11 @@
 // de novo lançamento, que é a ação mais usada do app.
 
 import { Feather } from '@expo/vector-icons';
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTapAnim } from '../hooks/useTapAnim';
 import { FONT_FAMILY, RADIUS } from '../theme';
 import { useTheme } from '../theme-context';
-
-function useTapAnim(scaleTo = 0.9) {
-  const scale = useRef(new Animated.Value(1)).current;
-  const onPressIn = () => Animated.spring(scale, { toValue: scaleTo, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
-  const onPressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 6 }).start();
-  return { scale, onPressIn, onPressOut };
-}
 
 export const TABS = [
   { key: 'home', icon: 'home', label: 'Início' },

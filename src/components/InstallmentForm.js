@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as db from '../db';
-import { PAYMENT_METHODS } from '../theme';
+import { PAYMENT_METHODS, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { addMonths, monthLabel, monthOf, today } from '../utils/date';
 import { formatMoney, splitInstallments } from '../utils/money';
@@ -202,7 +202,7 @@ export default function InstallmentForm({ visible, onClose, onSaved, installment
             gap: 4,
           }}
         >
-          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 15 }}>
+          <Text style={{ color: colors.text, fontFamily: fontForWeight('800'), fontSize: 15 }}>
             {form.count}x de {formatMoney(parcelValue)}
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 12 }}>
