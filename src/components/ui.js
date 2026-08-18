@@ -1,9 +1,11 @@
 // Peças visuais reaproveitadas por todas as telas. Tudo pega a cor do tema
 // ativo, então trocar claro/escuro não precisa de nenhuma gambiarra por tela.
 
-import { useMemo } from 'react';
+import { Feather } from '@expo/vector-icons';
+import { useRef } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -14,13 +16,23 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '../theme-context';
-import { FONT_FAMILY, RADIUS, fontForWeight } from '../theme';
+import { FONT_FAMILY, RADIUS, TABULAR_NUMS, fontForWeight } from '../theme';
 import { formatMoney } from '../utils/money';
+
+// Encolhe levemente no toque e volta com uma mola — resposta tátil em todo
+// componente tocável do app, sem precisar de lib nova (Animated é do RN).
+function useTapAnim(scaleTo = 0.96) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn = () => Animated.spring(scale, { toValue: scaleTo, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  const onPressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 6 }).start();
+  return { scale, onPressIn, onPressOut };
+}
 
 // ---- Cartão ----
 
 export function Card({ children, style, onPress, padded = true }) {
   const { colors, isDark } = useTheme();
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.98);
   const base = {
     backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
@@ -33,8 +45,8 @@ export function Card({ children, style, onPress, padded = true }) {
   };
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [base, pressed && { opacity: 0.75 }, style]}>
-        {children}
+      <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Animated.View style={[base, style, { transform: [{ scale }] }]}>{children}</Animated.View>
       </Pressable>
     );
   }
@@ -69,7 +81,7 @@ export function Money({ cents, kind, size = 16, weight = '700', style, sign = fa
   const prefix = kind === 'income' ? '+' : kind === 'expense' ? '-' : '';
   const mono = Number(weight) >= 700 ? FONT_FAMILY.monoBold : FONT_FAMILY.mono;
   return (
-    <Text style={[{ color, fontSize: size, fontFamily: mono }, style]}>
+    <Text style={[{ color, fontSize: size, fontFamily: mono }, TABULAR_NUMS, style]}>
       {prefix}
       {formatMoney(Math.abs(cents ?? 0), { sign: sign && !prefix })}
     </Text>
@@ -80,6 +92,7 @@ export function Money({ cents, kind, size = 16, weight = '700', style, sign = fa
 
 export function Button({ title, onPress, variant = 'primary', style, disabled, loading, icon }) {
   const { colors } = useTheme();
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.95);
   const palette = {
     primary: { bg: colors.primary, fg: colors.onPrimary, border: colors.primary },
     ghost: { bg: 'transparent', fg: colors.text, border: colors.border },
@@ -88,54 +101,56 @@ export function Button({ title, onPress, variant = 'primary', style, disabled, l
   }[variant];
 
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled || loading}
-      style={({ pressed }) => [
-        styles.button,
-        { backgroundColor: palette.bg, borderColor: palette.border },
-        (pressed || disabled) && { opacity: 0.6 },
-        style,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={palette.fg} />
-      ) : (
-        <Text style={{ color: palette.fg, fontFamily: FONT_FAMILY.semibold, fontSize: 15 }}>
-          {icon ? `${icon}  ` : ''}
-          {title}
-        </Text>
-      )}
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} disabled={disabled || loading}>
+      <Animated.View
+        style={[
+          styles.button,
+          { backgroundColor: palette.bg, borderColor: palette.border, transform: [{ scale }] },
+          disabled && { opacity: 0.6 },
+          style,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={palette.fg} />
+        ) : (
+          <Text style={{ color: palette.fg, fontFamily: FONT_FAMILY.semibold, fontSize: 15 }}>
+            {icon ? `${icon}  ` : ''}
+            {title}
+          </Text>
+        )}
+      </Animated.View>
     </Pressable>
   );
 }
 
 export function Chip({ label, active, onPress, color, emoji }) {
   const { colors } = useTheme();
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.94);
   const tint = color ?? colors.primary;
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.chip,
-        {
-          backgroundColor: active ? tint : colors.cardAlt,
-          borderColor: active ? tint : colors.border,
-        },
-        pressed && { opacity: 0.7 },
-      ]}
-    >
-      <Text
-        numberOfLines={1}
-        style={{
-          color: active ? '#fff' : colors.text,
-          fontFamily: active ? FONT_FAMILY.semibold : FONT_FAMILY.medium,
-          fontSize: 13,
-        }}
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+      <Animated.View
+        style={[
+          styles.chip,
+          {
+            backgroundColor: active ? tint : colors.cardAlt,
+            borderColor: active ? tint : colors.border,
+            transform: [{ scale }],
+          },
+        ]}
       >
-        {emoji ? `${emoji} ` : ''}
-        {label}
-      </Text>
+        <Text
+          numberOfLines={1}
+          style={{
+            color: active ? '#fff' : colors.text,
+            fontFamily: active ? FONT_FAMILY.semibold : FONT_FAMILY.medium,
+            fontSize: 13,
+          }}
+        >
+          {emoji ? `${emoji} ` : ''}
+          {label}
+        </Text>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -149,25 +164,33 @@ export function Segmented({ options, value, onChange, activeColor }) {
         const active = opt.key === value;
         const tint = active ? (opt.color ?? activeColor ?? colors.primary) : 'transparent';
         return (
-          <Pressable
+          <SegmentButton
             key={opt.key}
+            active={active}
+            tint={tint}
+            label={opt.label}
+            textColor={colors.textMuted}
             onPress={() => onChange(opt.key)}
-            style={[styles.segment, { backgroundColor: tint }]}
-          >
-            <Text
-              numberOfLines={1}
-              style={{
-                color: active ? '#fff' : colors.textMuted,
-                fontFamily: FONT_FAMILY.semibold,
-                fontSize: 13,
-              }}
-            >
-              {opt.label}
-            </Text>
-          </Pressable>
+          />
         );
       })}
     </View>
+  );
+}
+
+function SegmentButton({ active, tint, label, textColor, onPress }) {
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.93);
+  return (
+    <Pressable style={{ flex: 1 }} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+      <Animated.View style={[styles.segment, { backgroundColor: tint, transform: [{ scale }] }]}>
+        <Text
+          numberOfLines={1}
+          style={{ color: active ? '#fff' : textColor, fontFamily: FONT_FAMILY.semibold, fontSize: 13 }}
+        >
+          {label}
+        </Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -215,9 +238,11 @@ export function Badge({ label, color, tone = 'soft' }) {
   );
 }
 
-// Ícone (emoji) num quadrado levemente arredondado — menos "bolinha fofa",
-// mais crachá/selo. Usado em quase toda lista do app.
-export function IconBubble({ emoji, color, size = 42 }) {
+// Ícone num quadrado levemente arredondado — menos "bolinha fofa", mais
+// crachá/selo. `emoji` é o desenho escolhido pelo usuário (categoria, conta —
+// isso é personalização, não decoração, não trocar). `icon` é pra ícone de
+// UI/sistema (nome do Feather) nos lugares que a gente controla.
+export function IconBubble({ emoji, icon, color, size = 42 }) {
   const { colors } = useTheme();
   const tint = color ?? colors.primary;
   return (
@@ -231,7 +256,7 @@ export function IconBubble({ emoji, color, size = 42 }) {
         justifyContent: 'center',
       }}
     >
-      <Text style={{ fontSize: size * 0.45 }}>{emoji}</Text>
+      {icon ? <Feather name={icon} size={size * 0.46} color={tint} /> : <Text style={{ fontSize: size * 0.45 }}>{emoji}</Text>}
     </View>
   );
 }
@@ -262,7 +287,9 @@ export function Divider({ style }) {
 // ---- Bottom sheet ----
 
 // Modal que sobe de baixo, usado em todos os formulários e seletores.
-export function Sheet({ visible, onClose, title, children, footer, height = '90%' }) {
+// `onBack`, quando passado, troca o X por uma seta de voltar (menu > detalhe
+// dentro do mesmo sheet, sem empilhar Modal em cima de Modal).
+export function Sheet({ visible, onClose, onBack, title, children, footer, height = '90%' }) {
   const { colors } = useTheme();
   const sheetStyles = useMemo(
     () => ({
@@ -290,9 +317,14 @@ export function Sheet({ visible, onClose, title, children, footer, height = '90%
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
           </View>
           <View style={styles.sheetHeader}>
+            {onBack ? (
+              <Pressable onPress={onBack} hitSlop={10} style={{ marginRight: 2 }}>
+                <Feather name="chevron-left" size={24} color={colors.text} />
+              </Pressable>
+            ) : null}
             <Text style={{ fontSize: 18, fontFamily: FONT_FAMILY.bold, color: colors.text, flex: 1 }}>{title}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={{ fontSize: 20, color: colors.textMuted }}>✕</Text>
+              <Feather name="x" size={22} color={colors.textMuted} />
             </Pressable>
           </View>
           <ScrollView
@@ -331,19 +363,22 @@ export function Header({ title, subtitle, right, onBack }) {
   );
 }
 
-// Botão do cabeçalho (⚙️, 🌙, ➕...) — quadrado arredondado, não círculo.
-export function RoundButton({ emoji, onPress, color }) {
+// Botão do cabeçalho (ajustes, mostrar/esconder valores...) — ícone vetorial,
+// quadrado arredondado, não círculo. `emoji` é só pra casos pontuais sem
+// ícone equivalente; prefira `icon` (nome do Feather).
+export function RoundButton({ icon, emoji, onPress, color }) {
   const { colors } = useTheme();
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.9);
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.roundButton,
-        { backgroundColor: color ?? colors.card, borderColor: colors.border },
-        pressed && { opacity: 0.6 },
-      ]}
-    >
-      <Text style={{ fontSize: 17 }}>{emoji}</Text>
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+      <Animated.View
+        style={[
+          styles.roundButton,
+          { backgroundColor: color ?? colors.card, borderColor: colors.border, transform: [{ scale }] },
+        ]}
+      >
+        {icon ? <Feather name={icon} size={18} color={colors.text} /> : <Text style={{ fontSize: 17 }}>{emoji}</Text>}
+      </Animated.View>
     </Pressable>
   );
 }

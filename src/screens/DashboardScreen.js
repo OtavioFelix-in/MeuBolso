@@ -74,8 +74,8 @@ export default function DashboardScreen({ onOpenSettings }) {
 
   const headerRight = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <RoundButton emoji={hidden ? '🙈' : '👁️'} onPress={toggleHidden} />
-      <RoundButton emoji="⚙️" onPress={onOpenSettings} />
+      <RoundButton icon={hidden ? 'eye-off' : 'eye'} onPress={toggleHidden} />
+      <RoundButton icon="settings" onPress={onOpenSettings} />
     </View>
   );
 

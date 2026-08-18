@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import * as db from '../db';
 import { useTheme } from '../theme-context';
-import { FONT_FAMILY, RADIUS } from '../theme';
+import { FONT_FAMILY, RADIUS, TABULAR_NUMS } from '../theme';
 import { formatDate, fromIsoDate, toIsoDate } from '../utils/date';
 import { centsToDigits, digitsToCents, formatMoney } from '../utils/money';
 import { Chip, IconBubble, Sheet } from './ui';
@@ -118,6 +118,7 @@ export function MoneyField({ cents, onChange, autoFocus, color, big = true, retu
           color: tint,
           padding: 0,
           paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+          ...TABULAR_NUMS,
         }}
         value={formatMoney(digitsToCents(digits), { symbol: false })}
         onChangeText={handle}

@@ -1,18 +1,22 @@
 // Paletas (clara/escura), catálogos fixos e as categorias que já vêm prontas
 // na primeira abertura. Os componentes pegam a paleta ativa via useTheme().
 
-// Tipografia: IBM Plex Sans pro texto (peso institucional, reto — sem o
-// arredondado "amigável" de fonte padrão), IBM Plex Mono pros valores em
-// dinheiro (algarismo tabular, cara de extrato/ficha — reforça precisão).
-// Carregada via @expo-google-fonts em App.js; aqui só os nomes de família.
+// Tipografia: Inter — a mesma fonte usada pelo Banco Inter (o "Inter" do nome
+// é literalmente essa família). Reta, neutra, feita pra interface financeira,
+// com algarismo tabular nativo (sem precisar de uma fonte mono separada pros
+// valores). Carregada via @expo-google-fonts em App.js; aqui só os nomes.
 export const FONT_FAMILY = {
-  regular: 'IBMPlexSans_400Regular',
-  medium: 'IBMPlexSans_500Medium',
-  semibold: 'IBMPlexSans_600SemiBold',
-  bold: 'IBMPlexSans_700Bold',
-  mono: 'IBMPlexMono_500Medium',
-  monoBold: 'IBMPlexMono_600SemiBold',
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+  mono: 'Inter_500Medium',
+  monoBold: 'Inter_700Bold',
 };
+
+// Algarismo tabular (todo dígito com a mesma largura) pros valores em
+// dinheiro alinharem em coluna — recurso nativo da Inter, sem trocar de fonte.
+export const TABULAR_NUMS = { fontVariant: ['tabular-nums'] };
 
 // Os componentes de ui.js/fields.js já usavam `fontWeight` (herdado da fonte
 // do sistema, que sintetiza qualquer peso). Fonte custom não faz isso — cada

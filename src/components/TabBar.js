@@ -2,10 +2,17 @@
 // de novo lançamento, que é a ação mais usada do app.
 
 import { Feather } from '@expo/vector-icons';
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FONT_FAMILY, RADIUS } from '../theme';
 import { useTheme } from '../theme-context';
+
+function useTapAnim(scaleTo = 0.9) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn = () => Animated.spring(scale, { toValue: scaleTo, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  const onPressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 6 }).start();
+  return { scale, onPressIn, onPressOut };
+}
 
 export const TABS = [
   { key: 'home', icon: 'home', label: 'Início' },
@@ -21,33 +28,34 @@ export default function TabBar({ active, onChange }) {
 
   return (
     <View style={styles.bar}>
-      {TABS.map((tab) => {
-        const isActive = tab.key === active;
-        return (
-          <Pressable key={tab.key} style={styles.tab} onPress={() => onChange(tab.key)} hitSlop={4}>
-            <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
-              <Feather name={tab.icon} size={19} color={isActive ? colors.primary : colors.textMuted} />
-            </View>
-            <Text style={[styles.label, isActive && styles.labelActive]} numberOfLines={1}>
-              {tab.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {TABS.map((tab) => (
+        <Tab key={tab.key} tab={tab} isActive={tab.key === active} onPress={() => onChange(tab.key)} colors={colors} styles={styles} />
+      ))}
     </View>
+  );
+}
+
+function Tab({ tab, isActive, onPress, colors, styles }) {
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.88);
+  return (
+    <Pressable style={styles.tab} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} hitSlop={4}>
+      <Animated.View style={[styles.iconWrap, isActive && styles.iconWrapActive, { transform: [{ scale }] }]}>
+        <Feather name={tab.icon} size={19} color={isActive ? colors.primary : colors.textMuted} />
+      </Animated.View>
+      <Text style={[styles.label, isActive && styles.labelActive]} numberOfLines={1}>
+        {tab.label}
+      </Text>
+    </Pressable>
   );
 }
 
 export function Fab({ onPress, icon = 'plus' }) {
   const { colors } = useTheme();
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.88);
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        {
-          position: 'absolute',
-          right: 20,
-          bottom: 18,
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} style={{ position: 'absolute', right: 20, bottom: 18 }}>
+      <Animated.View
+        style={{
           width: 56,
           height: 56,
           borderRadius: RADIUS.xl,
@@ -59,11 +67,11 @@ export function Fab({ onPress, icon = 'plus' }) {
           shadowRadius: 10,
           shadowOffset: { width: 0, height: 5 },
           elevation: 6,
-        },
-        pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] },
-      ]}
-    >
-      <Feather name={icon} size={26} color={colors.onPrimary} />
+          transform: [{ scale }],
+        }}
+      >
+        <Feather name={icon} size={26} color={colors.onPrimary} />
+      </Animated.View>
     </Pressable>
   );
 }
