@@ -147,4 +147,32 @@ exige reescrever o modelo de dados do zero.
   app e servidor evita a classe de bug mais comum nessa transição (schema
   divergindo entre front e back sem avisar em tempo de compilação).
 
+### Já implementado nessa direção (2026-08-18): avatar no canto superior esquerdo
+Login em si fica pra depois, mas já criamos o ponto de entrada visual: um avatar
+(iniciais do nome, círculo verde) no canto superior esquerdo do Início — igual
+Banco Inter/Itaú —, que hoje abre a edição do nome (`ProfileSheet`, só o campo
+"como o app deve te chamar"). `Header` (`ui.js`) ganhou um slot `left` genérico
+pra isso, reutilizável em outras telas se fizer sentido.
+
+### Ideia registrada: pedir mais dado no cadastro, pensando no banco futuro
+Otávio sugeriu já começar a coletar mais informação de perfil no onboarding
+(além do nome), preparando terreno pra quando existir backend de verdade —
+e observou que isso muda até o fluxo de acesso com biometria (hoje a biometria
+só desbloqueia o app local; com conta de verdade, ela também precisaria
+autenticar contra o backend, não só liberar a tela).
+
+**Não implementado ainda — só registrado.** Antes de pedir mais campo no
+onboarding vale decidir junto com a arquitetura do item acima, porque:
+- Pedir dado (e-mail? CPF? telefone?) sem ter backend pra guardar com segurança
+  é pior que não pedir — ficaria só solto em `settings` do SQLite local, sem a
+  criptografia/isolamento que dado sensível desse tipo pede.
+- O tipo de campo (e-mail vs. telefone vs. nada, só conta social) depende de
+  qual vai ser o método de login (e-mail/senha, OAuth do Google, magic link...),
+  que também não foi decidido.
+- Onboarding mais longo tem custo real de abandono (o próprio `PLANEJAMENTO.md`
+  antigo já registrava isso: "onboarding longo é onde apps perdem usuário") — só
+  vale alongar se o dado pedido já tiver uso imediato, não "pra guardar por guardar".
+
+Retomar isso junto da decisão de backend (item acima), não antes.
+
 Sem próximo passo definido — retomar quando o Otávio quiser aprofundar.

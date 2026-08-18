@@ -336,7 +336,7 @@ export function Sheet({ visible, onClose, onBack, title, children, footer, heigh
 
 // ---- Cabeçalho de tela ----
 
-export function Header({ title, subtitle, right, onBack }) {
+export function Header({ title, subtitle, right, left, onBack }) {
   const { colors } = useTheme();
   return (
     <View style={styles.header}>
@@ -345,12 +345,39 @@ export function Header({ title, subtitle, right, onBack }) {
           <Text style={{ fontSize: 26, color: colors.text }}>‹</Text>
         </Pressable>
       ) : null}
+      {left}
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 26, fontFamily: FONT_FAMILY.bold, color: colors.text }}>{title}</Text>
         {subtitle ? <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2, fontFamily: FONT_FAMILY.regular }}>{subtitle}</Text> : null}
       </View>
       {right}
     </View>
+  );
+}
+
+// Avatar do usuário (iniciais num círculo) — toque abre o perfil. Padrão de
+// app de banco (Inter, Itaú...): avatar no canto superior esquerdo, ao lado
+// do título, em vez do perfil ficar escondido só dentro de Ajustes.
+export function Avatar({ name, onPress, size = 40 }) {
+  const { colors } = useTheme();
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.9);
+  const initial = (name || '?').trim().charAt(0).toUpperCase();
+  return (
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} style={{ marginRight: 10 }}>
+      <Animated.View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size * 0.28,
+          backgroundColor: colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{ scale }],
+        }}
+      >
+        <Text style={{ color: colors.onPrimary, fontSize: size * 0.42, fontFamily: FONT_FAMILY.bold }}>{initial}</Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 

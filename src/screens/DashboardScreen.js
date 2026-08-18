@@ -16,13 +16,17 @@ import MonthSwitcher from '../components/MonthSwitcher';
 import SalarySheet from '../components/SalarySheet';
 import TipCard from '../components/TipCard';
 import TransactionRow from '../components/TransactionRow';
-import { Badge, Button, Card, Divider, EmptyState, Header, IconBubble, Money, Muted, ProgressBar, RoundButton, SectionTitle } from '../components/ui';
+import { Avatar, Badge, Button, Card, Divider, EmptyState, Header, IconBubble, Money, Muted, ProgressBar, RoundButton, SectionTitle } from '../components/ui';
+import { ProfileSheet } from '../components/SettingsSheets';
 
 export default function DashboardScreen({ onOpenSettings }) {
   const { colors } = useTheme();
   const { month, version, refresh, openTransaction, navigate, hidden, toggleHidden } = useApp();
   const [data, setData] = useState(null);
   const [openingSalary, setOpeningSalary] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const userName = db.getFirstName();
 
   // Saudação personalizada com o nome do onboarding ("Boa tarde, João").
   const greeting = useMemo(() => {
@@ -87,7 +91,12 @@ export default function DashboardScreen({ onOpenSettings }) {
         contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
       >
-        <Header title="Meu Bolso" subtitle={`Previsão de ${monthLabel(month, { full: true })}`} right={headerRight} />
+        <Header
+          title="Meu Bolso"
+          subtitle={`Previsão de ${monthLabel(month, { full: true })}`}
+          left={<Avatar name={userName} onPress={() => setProfileOpen(true)} />}
+          right={headerRight}
+        />
         <View style={{ marginTop: 14 }}>
           <MonthSwitcher />
         </View>
@@ -129,6 +138,13 @@ export default function DashboardScreen({ onOpenSettings }) {
           onClose={() => setOpeningSalary(false)}
           onConfirm={(cents) => { db.openMonth(month); db.setMonthSalary(month, cents); refresh(); }}
         />
+
+        <ProfileSheet
+          visible={profileOpen}
+          initial={db.getUserName()}
+          onClose={() => setProfileOpen(false)}
+          onSaved={refresh}
+        />
       </ScrollView>
     );
   }
@@ -142,12 +158,20 @@ export default function DashboardScreen({ onOpenSettings }) {
       <Header
         title={greeting}
         subtitle={`Resumo de ${monthLabel(month, { full: true })}`}
+        left={<Avatar name={userName} onPress={() => setProfileOpen(true)} />}
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <RoundButton emoji={hidden ? '🙈' : '👁️'} onPress={toggleHidden} />
-            <RoundButton emoji="⚙️" onPress={onOpenSettings} />
+            <RoundButton icon={hidden ? 'eye-off' : 'eye'} onPress={toggleHidden} />
+            <RoundButton icon="settings" onPress={onOpenSettings} />
           </View>
         }
+      />
+
+      <ProfileSheet
+        visible={profileOpen}
+        initial={db.getUserName()}
+        onClose={() => setProfileOpen(false)}
+        onSaved={refresh}
       />
 
       <View style={{ marginTop: 14 }}>
