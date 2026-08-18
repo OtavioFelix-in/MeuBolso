@@ -93,11 +93,58 @@ de ver o antes/depois.
 
 ## 3. Pendências de decisão
 
-- [ ] **Ícone vetorial**: `Feather` (mais fino/minimalista) ou `Ionicons` (mais
-  cheio/amigável)? Ajuda ver os dois lado a lado nas telas reais antes de decidir.
-- [ ] **Fonte**: nome/estilo de referência (alguma fonte de app que você gosta?)
-  ou eu sugiro 2-3 opções pra comparar.
-- [ ] **Nível de animação**: só o básico (fade/slide nativo) ou vale investir em algo
-  mais chamativo (ex.: número contando, gráfico animando ao abrir a aba)?
-- [ ] **Ordem de execução**: seguir a ordem de impacto acima (ícones → fonte →
-  splash → sistema de espaçamento → microinteração) ou priorizar diferente?
+- [x] **Ícone vetorial**: `Feather`, aplicado na barra inferior, `RoundButton` e
+  `IconBubble` (quando é ícone de UI, não emoji escolhido pelo usuário).
+- [x] **Fonte**: `Inter` — pesquisado e é literalmente a fonte que o Banco Inter usa
+  na própria marca (grátis, Google Fonts). Aplicada no app inteiro (2026-08-18).
+- [x] **Splash screen** ligada via `expo-splash-screen`, fundo no gradiente de marca.
+- [x] **Sistema de raio** (`RADIUS` em `theme.js`) aplicado em `ui.js`/`fields.js`.
+- [x] **Animação de toque** (`useTapAnim`, `src/hooks/useTapAnim.js`) em todo
+  componente clicável — Card, Button, Chip, abas, RoundButton, FAB.
+- [x] **Ícone do app** trocado (arte nova do usuário) + identidade de gradiente
+  verde-escuro-pro-preto aplicada com moderação (cartão de resultado do Início).
+- [x] **Ajustes** reescrito como menu de grupos (era lista única sem fim).
+
+Front-end desta leva está concluído. Falta ainda, se quiser continuar polindo depois
+do item 4 abaixo: emoji de UI que sobrou fora da barra inferior (tipos de
+conta/investimento/bem em `theme.js`, cabeçalhos de tela), e animações mais
+elaboradas (número contando, gráfico animando ao abrir aba) — hoje só tem o
+toque/escala, não isso.
+
+## 4. Próximo horizonte: multiusuário + backend (NÃO decidido, só registrado)
+
+Discussão de 2026-08-18: Otávio quer escalar o Meu Bolso pra outros usuários e,
+mais pra frente, ligar num banco de dados de verdade (hoje é só SQLite local, sem
+login, sem servidor). **Nada disso está decidido ainda — é só o registro da
+conversa pra não perder o fio quando a gente voltar nisso.**
+
+### O que já ajuda
+Toda tabela já tem `uuid`, `updated_at` e `deleted` — desenhado desde o início
+pensando numa futura sincronização (ver `meubolso` skill). Migrar pra sync não
+exige reescrever o modelo de dados do zero.
+
+### O que falta pra virar multiusuário de verdade
+- **Autenticação**: hoje "dono do aparelho = dono dos dados". Precisa de login e
+  isolar dado por usuário no backend (ou por instância, se cada um tiver seu próprio
+  espaço).
+- **Decisão de arquitetura, ainda em aberto**:
+  - **Local-first com sincronização em background** — mantém "funciona sem
+    internet" (o diferencial do app hoje), mas sincronizar direito (conflito de
+    edição em dois aparelhos, merge) é a parte mais difícil de implementar.
+  - **Online-first com backend obrigatório** — mais simples de construir, mas
+    perde a proposta offline-first que o app tem hoje.
+- **Ideia inicial do Otávio a explorar**: hospedar o banco no **OneDrive** do
+  próprio usuário, em vez de backend tradicional (Supabase/Firebase/servidor
+  próprio). Vale investigar depois: OneDrive não é banco de dados (é storage de
+  arquivo) — daria pra sincronizar um arquivo SQLite via OneDrive (cada usuário com
+  o próprio arquivo, sem multiusuário-num-servidor-só), mas escrita concorrente
+  em arquivo sincronizado por serviço de nuvem de terceiros tende a gerar conflito
+  (dois aparelhos escrevendo "ao mesmo tempo" sem lock). Funciona bem pra "um
+  usuário, vários aparelhos dele"; não resolve "muitos usuários independentes"
+  sozinho. Comparar depois com Supabase/Firebase (multiusuário de verdade, mais
+  rápido de sair do chão) vs. backend próprio (mais controle, mais trabalho).
+- **TypeScript sobe de prioridade** se isso avançar: contrato de tipo entre
+  app e servidor evita a classe de bug mais comum nessa transição (schema
+  divergindo entre front e back sem avisar em tempo de compilação).
+
+Sem próximo passo definido — retomar quando o Otávio quiser aprofundar.
