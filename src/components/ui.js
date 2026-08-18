@@ -2,6 +2,7 @@
 // ativo, então trocar claro/escuro não precisa de nenhuma gambiarra por tela.
 
 import { Feather } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import {
   ActivityIndicator,
   Animated,
