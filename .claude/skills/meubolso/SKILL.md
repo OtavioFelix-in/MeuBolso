@@ -1,11 +1,11 @@
 ---
 name: meubolso
-description: Como o app Meu Bolso funciona — arquitetura, modelo de dados, convenções e como buildar/rodar. Use ao trabalhar no projeto de controle financeiro em claude/financas (telas, banco SQLite, cartões, contas fixas, meses abertos/fechados, gerar o APK).
+description: Como o app Meu Bolso funciona — arquitetura, modelo de dados, convenções e como buildar/rodar. Use ao trabalhar no projeto de controle financeiro (telas, banco SQLite, cartões, contas fixas, meses abertos/fechados, gerar o APK).
 ---
 
 # Meu Bolso — guia do app
 
-App de **controle financeiro pessoal**, feito em **Expo SDK 57 + React Native 0.86**, com banco **SQLite local (expo-sqlite, API síncrona)**. É **100% offline**: nenhum servidor, nenhuma conta, tudo salvo no aparelho. Pasta: `claude/financas`. Pacote Android: `com.otavio.meubolso`.
+App de **controle financeiro pessoal**, feito em **Expo SDK 57 + React Native 0.86**, com banco **SQLite local (expo-sqlite, API síncrona)**. É **100% offline**: nenhum servidor, nenhuma conta, tudo salvo no aparelho. Código na raiz do repo (`App.js`, `src/`). Pacote Android: `com.otavio.meubolso`.
 
 > Antes de escrever qualquer código Expo, veja a doc versionada: https://docs.expo.dev/versions/v57.0.0/ (o Expo muda bastante entre versões).
 
