@@ -1,83 +1,144 @@
-# 💸 Meu Bolso
+<div align="center">
 
-O Meu Bolso nasceu de um gargalo financeiro meu: eu precisava de um app que atendesse do
-jeito que eu organizo minha vida financeira, e não encontrei um que servisse. Então criei
-o meu — **100% manual e offline**, feito com Expo (SDK 57) e React Native. Tudo fica salvo
-só no aparelho (SQLite) — sem conta, sem servidor, sem anúncio. O objetivo não é só resolver
-isso pra mim: é ajudar qualquer pessoa que também tenha dificuldade em lidar com o próprio
-dinheiro a enxergar, mês a mês, pra onde ele está indo.
+<img src="assets/icon.png" width="110" alt="Meu Bolso" />
 
-## Rodar
+# Meu Bolso
+**O controle financeiro que nasceu de um gargalo meu.**
+
+![Expo](https://img.shields.io/badge/Expo-SDK%2057-000020?logo=expo&logoColor=white)
+![React Native](https://img.shields.io/badge/React%20Native-0.86-61DAFB?logo=react&logoColor=black)
+![SQLite](https://img.shields.io/badge/SQLite-100%25%20offline-003B57?logo=sqlite&logoColor=white)
+![Android](https://img.shields.io/badge/Android-APK-3DDC84?logo=android&logoColor=white)
+
+</div>
+
+---
+
+## A história
+
+Eu precisava de um app que atendesse do jeito que **eu** organizo minha vida financeira, e não encontrei nenhum que servisse. Então criei o meu.
+
+O **Meu Bolso** é 100% manual e offline: tudo fica salvo só no aparelho, sem conta, sem servidor e sem anúncio. O objetivo não é só resolver o meu problema, é ajudar qualquer pessoa que também tenha dificuldade com o próprio dinheiro a enxergar, mês a mês, pra onde ele está indo. 
+---
+
+## Funcionalidades
+
+**Organização**
+- Botão **"+"** que cadastra um lançamento **único** ou **recorrente**, com a forma de pagamento decidindo pra onde vai o gasto (crédito usa o cartão, o resto sai da conta)
+- **Contas fixas** e **variáveis** (água, energia), com dia de vencimento
+- **Parcelamentos**: parcela atual, quanto falta e quanto pesam nos meses à frente
+- **Cartões de crédito** com limite, uso no mês e valor disponível
+- **Categorias** personalizáveis, com emoji e cor
+- **Comprovantes**: anexe foto ou imagem a um lançamento
+
+**Visão do mês**
+- **Início** com o resultado do mês em destaque (receitas − despesas − guardado), separando o que você já tem do que ainda é previsão
+- **Meses abertos e fechados**: só o mês que você abre gera as contas fixas e o salário; os demais mostram só a previsão
+- **Agenda** de eventos com valor planejado × gasto real
+- Olhinho que **esconde todos os valores**
+
+**Patrimônio e relatórios**
+- **Carteira** com contas, saldos, investimentos (aportes e resgates) e bens
+- **Relatórios** que respondem com números: "onde gasto mais?", "qual categoria mais cresceu?"
+- **Hábitos** com comparação mês a mês e **perfil financeiro** (reserva de emergência, taxa de poupança, fluxo de caixa)
+
+**Experiência**
+- **Bloqueio por biometria**
+- **Lembretes** de vencimento que funcionam com o app fechado
+- **Tema claro e escuro**
+- **Backup** local: exportar em `.json` e `.csv`, importar `.json`
+- **100% offline**, sem nenhuma conexão com a internet
+
+---
+
+## Tecnologias
+
+- **React Native 0.86** + **Expo SDK 57**
+- **expo-sqlite** com API síncrona: banco local, o app funciona sem internet
+- **expo-notifications**: lembretes locais agendados
+- **expo-local-authentication**: biometria
+- **react-native-svg**: gráficos próprios
+- **Inter** (Google Fonts) como fonte do app inteiro
+- **JavaScript** puro, sem framework de UI externo (componentes próprios)
+
+---
+
+## Arquitetura
+
+Offline-first: o **SQLite é a fonte da verdade** e mora no aparelho. Não existe backend.
+
+```
+financas/
+├── App.js                     # entrada: navegação à mão (abas + telas secundárias) e botão "+"
+├── src/
+│   ├── theme.js               # tokens: cores, espaçamento, tipografia, catálogos
+│   ├── theme-context.js       # provedor de tema claro/escuro
+│   ├── db/                    # SQLite, um arquivo por domínio (reexportados por index.js)
+│   │   ├── core.js            #   conexão, schema, seed
+│   │   ├── transactions.js    #   lançamentos (receita/despesa, previsto/pago)
+│   │   ├── recurrences.js     #   contas fixas e salário
+│   │   ├── installments.js    #   parcelamentos → geram as N parcelas
+│   │   ├── months.js          #   mês aberto/fechado, projeção, linha do tempo
+│   │   ├── cards.js           #   cartões de crédito
+│   │   ├── reports.js         #   saldos e séries dos gráficos
+│   │   └── backup.js          #   exportar/importar tudo + CSV
+│   ├── screens/               # Início, Despesas, Meses, Carteira, Relatórios e Ajustes
+│   ├── components/            # kit de UI, campos, formulários e gráficos SVG
+│   ├── hooks/                 # animações de entrada e de toque
+│   ├── security/              # biometria
+│   ├── notifications/         # lembretes locais
+│   └── utils/                 # dinheiro (centavos), datas pt-BR, comprovantes, backup
+├── DESIGN.md                  # padrão visual e de movimento
+└── PLANEJAMENTO.md            # planejamento do front-end
+```
+
+**Decisões que valem lembrar**
+
+- **Dinheiro é sempre `INTEGER` em centavos.** Nada de `float`, então as somas batem no último centavo.
+- **Datas** são `'YYYY-MM-DD'` (hora local) e meses são `'YYYY-MM'`.
+- **Contas fixas e parcelas viram lançamentos de verdade**, com `paid = 0` enquanto previstos. Dashboard, agenda e relatórios leem tudo de um lugar só, e abrir o mês de novo não duplica nada.
+- **Soft delete**: toda tabela tem `uuid`, `updated_at` e `deleted`, preparando o terreno pra uma futura sincronização entre aparelhos.
+
+---
+
+## Rodando o projeto
+
+**Desenvolvimento** (com o app Expo Go no celular):
 
 ```bash
-cd financas
+git clone https://github.com/OtavioFelix-in/MeuBolso.git
+cd MeuBolso
 npm install
 npx expo start
 ```
 
-Abra no **Expo Go** (celular) lendo o QR code, ou aperte `a` pra abrir num emulador Android.
+**Gerar o APK** (build local com Android SDK e JDK 17):
 
-> No Expo Go os **lembretes ficam desligados** (limitação do próprio Expo). Eles funcionam
-> normalmente no APK gerado (`eas build` / dev build).
-
-## O que dá pra fazer
-
-- **Início (dashboard):** saldo disponível, receitas/despesas do mês, investimentos,
-  patrimônio, quanto sobrou, % economizado, rosca de "pra onde o dinheiro foi", barras de
-  receita×despesa, evolução do patrimônio e próximos vencimentos. O olhinho 👁️ esconde
-  todos os valores.
-- **Extrato:** todos os lançamentos agrupados por dia, com busca e filtros (tipo, situação,
-  categoria, conta).
-- **Agenda:** calendário do mês, **contas fixas** (com histórico de pagamento e média) e
-  **compras parceladas** (parcela atual, quanto falta, previsão de término e quanto pesa em
-  cada mês à frente).
-- **Planos:** **metas** (quanto guardar por mês, previsão de chegada), **investimentos**
-  (rentabilidade, distribuição da carteira, aportes) e **patrimônio** (bens).
-- **Relatórios:** perguntas respondidas com números ("onde gasto mais?", "qual categoria
-  mais cresceu?", "quanto falta pras parcelas?"), **dashboard de hábitos** com comparação
-  mês a mês, e **perfil financeiro** (reserva de emergência, taxa de poupança, fluxo de
-  caixa, etc.).
-- **Ajustes:** contas, categorias/subcategorias, notificações, tema claro/escuro e
-  **backup** (exportar `.json` e `.csv`, importar `.json`).
-
-## Como está organizado
-
-```
-financas/
-├─ App.js                 # navegação por abas (feita à mão) + FAB de novo lançamento
-├─ src/
-│  ├─ db/                 # SQLite: um arquivo por domínio, reexportados por db/index.js
-│  │  ├─ core.js          #   conexão, schema, seed, settings, helper save()
-│  │  ├─ catalog.js       #   contas e categorias
-│  │  ├─ transactions.js  #   lançamentos (receita/despesa, previsto/pago)
-│  │  ├─ recurrences.js   #   contas fixas → materializam lançamentos por mês
-│  │  ├─ installments.js  #   parcelamentos → geram as N parcelas
-│  │  ├─ plans.js         #   metas, investimentos, bens
-│  │  ├─ reports.js       #   saldos, séries dos gráficos, relatórios inteligentes
-│  │  └─ backup.js        #   exportar/importar tudo + CSV
-│  ├─ components/         # kit de UI (ui.js), campos (fields.js), gráficos SVG (charts.js)
-│  ├─ screens/            # uma tela por aba + Ajustes
-│  ├─ notifications/      # lembretes locais (expo-notifications)
-│  ├─ utils/              # dinheiro (centavos), datas pt-BR, comprovantes
-│  ├─ theme.js            # paletas, catálogos e categorias padrão
-│  └─ theme-context.js    # tema claro/escuro (salvo no banco)
+```bash
+npx expo prebuild --platform android --clean
+cd android && ./gradlew assembleRelease
+# APK em: android/app/build/outputs/apk/release/app-release.apk
 ```
 
-## Decisões que valem lembrar
+Depois é só mandar o `.apk` para o celular, tocar nele e permitir a instalação.
 
-- **Dinheiro é sempre `INTEGER` em centavos.** Nada de `float` — as somas do banco batem no
-  último centavo. Formatação em `utils/money.js`.
-- **Contas fixas e parcelas viram lançamentos de verdade** (`recurrence_id` / `installment_id`),
-  com `paid = 0` enquanto previstos. Assim dashboard, calendário e relatórios leem tudo de um
-  lugar só. `materializeMonth()` é idempotente — abrir o mês de novo não duplica nada.
-- **Saldo disponível** = saldo das contas − o que foi guardado em metas/investimentos.
-  **Patrimônio** = saldo + metas + investimentos + bens.
-- Toda tabela tem `uuid`, `updated_at` e `deleted` (soft delete), preparando o terreno pra
-  uma futura sincronização entre aparelhos.
-- Antes de mexer em código Expo, ver `AGENTS.md`.
+> Os lembretes **não** funcionam dentro do Expo Go (limitação do Android desde o SDK 53), mas funcionam normalmente no APK instalado.
+>
+> No Windows, o Gradle **não compila em caminho com acento**: faça o build numa cópia em um caminho só com ASCII.
 
-## Licença
+---
 
-Todos os direitos reservados © Otávio Felix Da Silva. Este código é disponibilizado
-publicamente para visualização e portfólio, mas seu uso, cópia, modificação ou
-redistribuição não são autorizados sem permissão expressa do autor.
+## Próximos passos
+
+- Sincronização entre aparelhos (o modelo de dados já está preparado)
+- Integração bancária, via Open Finance ou importação de OFX
+
+---
+
+<div align="center">
+
+Feito por **Otávio Felix Da Silva**.
+
+Todos os direitos reservados © Otávio Felix Da Silva. Este código é disponibilizado publicamente para visualização e portfólio, mas seu uso, cópia, modificação ou redistribuição não são autorizados sem permissão expressa do autor.
+
+</div>
