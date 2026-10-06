@@ -1,13 +1,14 @@
 // Cadastros de apoio: contas e categorias.
 
-import { db, nowIso, save, softDelete } from './core';
+import { CASH_ACCOUNT } from '../theme';
+import { db, getSetting, nowIso, save, softDelete } from './core';
 
 // ---- Contas ----
 
 export function getAccounts({ includeArchived = false } = {}) {
   return db.getAllSync(
     `SELECT * FROM accounts WHERE deleted = 0 ${includeArchived ? '' : 'AND archived = 0'}
-     ORDER BY position, id`
+     ORDER BY (type = 'dinheiro'), position, id`
   );
 }
 
@@ -22,26 +23,69 @@ export function getAccountsWithBalance() {
       ), 0) AS balance_cents
     FROM accounts a
     WHERE a.deleted = 0 AND a.archived = 0
-    ORDER BY a.position, a.id
+    ORDER BY (a.type = 'dinheiro'), a.position, a.id
   `);
 }
 
-export function saveAccount({ id, name, type, emoji, color, initialCents }) {
+export function saveAccount({ id, name, type, color, initialCents }) {
   return save('accounts', id, {
     name,
     type,
-    emoji,
     color,
     initial_cents: initialCents,
   });
 }
 
-export function deleteAccount(id) {
-  softDelete('accounts', id);
-  db.runSync('UPDATE transactions SET account_id = NULL, updated_at = ? WHERE account_id = ?', [
-    nowIso(),
-    id,
-  ]);
+export function getDefaultAccountId() {
+  const lastId = Number(getSetting('last_account', 0)) || 0;
+  const accounts = getAccounts();
+  if (accounts.some((a) => a.id === lastId)) return lastId;
+  return accounts[0]?.id ?? null;
+}
+
+export function getCashAccount() {
+  return db.getFirstSync(
+    "SELECT * FROM accounts WHERE deleted = 0 AND archived = 0 AND type = 'dinheiro' ORDER BY position, id LIMIT 1"
+  );
+}
+
+export function setCashAccount(cents) {
+  const cash = getCashAccount();
+  return save('accounts', cash?.id, {
+    name: cash?.name ?? CASH_ACCOUNT.name,
+    type: 'dinheiro',
+    color: cash?.color ?? CASH_ACCOUNT.color,
+    initial_cents: cents,
+  });
+}
+
+export function removeCashAccount() {
+  const cash = getCashAccount();
+  if (cash && countAccountUse(cash.id) === 0) softDelete('accounts', cash.id);
+}
+
+export function countAccountUse(id) {
+  return (
+    db.getFirstSync('SELECT COUNT(*) AS total FROM transactions WHERE deleted = 0 AND account_id = ?', [id])?.total ?? 0
+  );
+}
+
+export function deleteAccount(id, moveToId = null) {
+  db.withTransactionSync(() => {
+    if (moveToId) {
+      const now = nowIso();
+      const acc = db.getFirstSync('SELECT initial_cents FROM accounts WHERE id = ?', [id]);
+      db.runSync('UPDATE accounts SET initial_cents = initial_cents + ?, updated_at = ? WHERE id = ?', [
+        acc?.initial_cents ?? 0,
+        now,
+        moveToId,
+      ]);
+      for (const table of ['transactions', 'recurrences', 'installments']) {
+        db.runSync(`UPDATE ${table} SET account_id = ?, updated_at = ? WHERE account_id = ?`, [moveToId, now, id]);
+      }
+    }
+    softDelete('accounts', id);
+  });
 }
 
 // ---- Categorias ----

@@ -82,9 +82,11 @@ export function Money({ cents, kind, size = 16, weight = '700', style, sign = fa
 
 // ---- Botões ----
 
-export function Button({ title, onPress, variant = 'primary', style, disabled, loading, icon }) {
+export function Button({ title, onPress, variant = 'primary', style, disabled, loading, icon, feather }) {
   const { colors } = useTheme();
   const { scale, onPressIn, onPressOut } = useTapAnim(0.95);
+  const flat = StyleSheet.flatten(style) ?? {};
+  const outer = { flex: flat.flex, flexGrow: flat.flexGrow, flexBasis: flat.flexBasis, alignSelf: flat.alignSelf };
   const palette = {
     primary: { bg: colors.primary, fg: colors.onPrimary, border: colors.primary },
     ghost: { bg: 'transparent', fg: colors.text, border: colors.border },
@@ -93,7 +95,7 @@ export function Button({ title, onPress, variant = 'primary', style, disabled, l
   }[variant];
 
   return (
-    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} disabled={disabled || loading}>
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} disabled={disabled || loading} style={outer}>
       <Animated.View
         style={[
           styles.button,
@@ -104,6 +106,11 @@ export function Button({ title, onPress, variant = 'primary', style, disabled, l
       >
         {loading ? (
           <ActivityIndicator color={palette.fg} />
+        ) : feather ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Feather name={feather} size={17} color={palette.fg} />
+            <Text style={{ color: palette.fg, fontFamily: FONT_FAMILY.semibold, fontSize: 15 }}>{title}</Text>
+          </View>
         ) : (
           <Text style={{ color: palette.fg, fontFamily: FONT_FAMILY.semibold, fontSize: 15 }}>
             {icon ? `${icon}  ` : ''}
@@ -115,7 +122,7 @@ export function Button({ title, onPress, variant = 'primary', style, disabled, l
   );
 }
 
-export function Chip({ label, active, onPress, color, emoji }) {
+export function Chip({ label, active, onPress, color, emoji, icon }) {
   const { colors } = useTheme();
   const { scale, onPressIn, onPressOut } = useTapAnim(0.94);
   const tint = color ?? colors.primary;
@@ -129,8 +136,10 @@ export function Chip({ label, active, onPress, color, emoji }) {
             borderColor: active ? tint : colors.border,
             transform: [{ scale }],
           },
+          icon ? { flexDirection: 'row', alignItems: 'center', gap: 6 } : null,
         ]}
       >
+        {icon ? <Feather name={icon} size={14} color={active ? '#fff' : colors.textMuted} /> : null}
         <Text
           numberOfLines={1}
           style={{
@@ -253,11 +262,11 @@ export function IconBubble({ emoji, icon, color, size = 42 }) {
   );
 }
 
-export function EmptyState({ emoji, title, subtitle, action, onAction }) {
+export function EmptyState({ emoji, icon, title, subtitle, action, onAction }) {
   const { colors } = useTheme();
   return (
     <View style={styles.empty}>
-      <Text style={{ fontSize: 40 }}>{emoji}</Text>
+      {icon ? <IconBubble icon={icon} size={52} /> : <Text style={{ fontSize: 40 }}>{emoji}</Text>}
       <Text style={{ fontSize: 16, fontFamily: FONT_FAMILY.semibold, color: colors.text, marginTop: 10, textAlign: 'center' }}>
         {title}
       </Text>

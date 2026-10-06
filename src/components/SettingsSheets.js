@@ -5,9 +5,10 @@
 import { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 import * as db from '../db';
+import { accountOption } from '../theme';
 import { useTheme } from '../theme-context';
 import { currentMonth, monthLabel, monthOf } from '../utils/date';
-import { DateField, Field, MoneyField, StepperField, TextField } from './fields';
+import { DateField, Field, MoneyField, PickerField, StepperField, TextField } from './fields';
 import { Button, Muted, Sheet } from './ui';
 
 export function ProfileSheet({ visible, initial, onClose, onSaved }) {
@@ -70,17 +71,21 @@ export function SalarySheet({ visible, current, onClose, onSaved }) {
   const [cents, setCents] = useState(current.cents);
   const [day, setDay] = useState(current.day || 5);
   const [applyFrom, setApplyFrom] = useState(currentMonth());
+  const [accountId, setAccountId] = useState(null);
+  const [accounts, setAccounts] = useState([]);
 
   useEffect(() => {
     if (visible) {
       setCents(current.cents);
       setDay(current.day || 5);
       setApplyFrom(currentMonth());
+      setAccounts(db.getAccounts());
+      setAccountId(current.accountId ?? db.getDefaultAccountId());
     }
-  }, [visible, current.cents, current.day]);
+  }, [visible, current.cents, current.day, current.accountId]);
 
   function save() {
-    db.saveSalary({ cents, day, applyFrom });
+    db.saveSalary({ cents, day, accountId, applyFrom });
     onSaved?.();
     onClose();
   }
@@ -99,6 +104,16 @@ export function SalarySheet({ visible, current, onClose, onSaved }) {
       <Field label="Dia que costuma cair" hint="Entra automático todo mês que você abrir.">
         <StepperField value={day} onChange={setDay} min={1} max={31} suffix="do mês" />
       </Field>
+      {accounts.length > 1 ? (
+        <Field label="Cai na conta">
+          <PickerField
+            label="Cai na conta"
+            value={accountId}
+            onChange={setAccountId}
+            options={accounts.map(accountOption)}
+          />
+        </Field>
+      ) : null}
       <Field
         label="Valer a partir de"
         hint="O novo valor vale deste mês em diante. Meses anteriores (já abertos) continuam com o salário antigo."

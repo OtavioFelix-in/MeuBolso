@@ -9,7 +9,7 @@
 
 import * as Crypto from 'expo-crypto';
 import * as SQLite from 'expo-sqlite';
-import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES } from '../theme';
+import { DEFAULT_CATEGORIES } from '../theme';
 
 export const db = SQLite.openDatabaseSync('meubolso.db');
 
@@ -242,8 +242,9 @@ function runMigrations() {
   addColumnIfMissing('investments', 'liquid', 'INTEGER NOT NULL DEFAULT 1');
 }
 
-// Primeira abertura: cria as categorias e contas padrão. Se a pessoa apagar
-// tudo depois, não recriamos (a flag fica salva em settings).
+// Primeira abertura: cria as categorias padrão. As contas não vêm prontas —
+// a pessoa cadastra as dela no onboarding. Se apagar tudo depois, não
+// recriamos (a flag fica salva em settings).
 function seedIfEmpty() {
   if (getSetting('seeded') === '1') return;
 
@@ -271,14 +272,6 @@ function seedIfEmpty() {
     });
   }
 
-  DEFAULT_ACCOUNTS.forEach((acc, i) => {
-    db.runSync(
-      `INSERT INTO accounts (uuid, name, type, emoji, color, initial_cents, position, updated_at)
-       VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
-      [newUuid(), acc.name, acc.type, acc.emoji, acc.color, i, nowIso()]
-    );
-  });
-
   setSetting('seeded', '1');
 }
 
@@ -292,8 +285,8 @@ function insertCategory({ name, kind, emoji, color, position, parentId, essentia
 }
 
 // Apaga TODOS os dados do app: zera todas as tabelas (inclusive settings, o que
-// remove nome, salário, flags de onboarding e trava) e recria só as categorias e
-// contas padrão. Depois disso o app volta ao estado de primeiro acesso.
+// remove nome, salário, flags de onboarding e trava) e recria só as categorias
+// padrão. Depois disso o app volta ao estado de primeiro acesso.
 export function wipeAllData() {
   const tables = [
     'transactions', 'recurrences', 'installments', 'goal_deposits', 'goals',

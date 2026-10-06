@@ -43,7 +43,7 @@ O ponto mais importante do modelo. Ver `src/db/months.js`.
   - `recurrence_id` / `installment_id` — quando o lançamento nasceu de uma conta fixa ou parcela.
 - `recurrences` — contas fixas / receitas recorrentes (inclui o **salário**). `variable` (1 = valor muda todo mês → conta variável), `period` (`monthly`/`annual`), `due_day`, `start_month`/`end_month`, `card_id`.
 - `installments` — compras parceladas; ao criar, geram N `transactions` (uma por mês). `off_budget` propaga pras parcelas.
-- `accounts` — contas (conta corrente, carteira, poupança). Saldo = inicial + lançamentos pagos.
+- `accounts` — contas. Tipos em `ACCOUNT_TYPES` (`theme.js`), em dois grupos: **digital** (corrente, poupança, conta digital/app, vale) e **físico** (`dinheiro`, dinheiro em espécie — `isCashAccount`). Saldo = inicial + lançamentos pagos. **Não há conta padrão no seed**: a pessoa cadastra as dela no onboarding (lista `BANK_PRESETS`); quem pula fica só com a conta de dinheiro em espécie. Todo lançamento fora do cartão precisa de conta (`getDefaultAccountId` preenche); apagar conta com lançamento passa os lançamentos e o saldo pra outra (`deleteAccount(id, moveToId)`). Cartão de crédito **não** é tipo de conta — é a tabela `cards`.
 - `cards` — cartões de crédito (limite, uso no mês, disponível). `src/db/cards.js`. Gasto no crédito tem `card_id` e **não** debita a conta corrente. `getSpendingSplit` = conta × cartão.
 - `investments` + `investment_moves` — aporte/resgate ajustam o valor atual; com `accountId`, criam transação `off_budget` na conta (debita o saldo).
 - `assets` — bens (valor de compra × valor atual).
@@ -57,7 +57,7 @@ Regras de saldo (em `src/db/reports.js`):
 
 ## Salário (src/db/budget.js)
 
-O salário é uma **recorrência de receita** identificada por `settings.salary_recurrence_id`.
+O salário é uma **recorrência de receita** identificada por `settings.salary_recurrence_id`, **sempre com `account_id`** (a conta onde cai; escolhida no onboarding e no SalarySheet).
 - `saveSalary({cents, day, applyFrom})` — vale a partir de `applyFrom`; meses anteriores já abertos mantêm o valor antigo.
 - `setMonthSalary(month, cents)` — define o salário só daquele mês (usado ao abrir). **Se ainda não há salário configurado, ele cria** (senão não salvava nada — bug já corrigido).
 

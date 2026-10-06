@@ -1,45 +1,48 @@
-// Formulários de conta e de categoria (usados nos Ajustes).
+// Formulários de conta e de categoria (Carteira, Ajustes e onboarding).
 
 import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 import * as db from '../db';
-import { ACCOUNT_TYPES, CHART_COLORS } from '../theme';
+import { ACCOUNT_TYPES, CHART_COLORS, isCashAccount } from '../theme';
 import { EmojiColorField, Field, MoneyField, PickerField, SwitchRow, TextField } from './fields';
 import { Button, Sheet } from './ui';
 
-const ACCOUNT_EMOJIS = ['🏦', '💵', '💳', '🐷', '🎟️', '📱', '💰', '🪙'];
 const CATEGORY_EMOJIS = ['🍽️', '🚌', '🏠', '🎓', '🩺', '🏋️', '🎮', '🛍️', '📺', '💖', '🐶', '✈️', '📚', '🧾', '📦', '💼'];
 
-export function AccountForm({ visible, onClose, onSaved, account }) {
-  const [form, setForm] = useState({ name: '', type: 'corrente', emoji: '🏦', color: CHART_COLORS[1], initialCents: 0 });
+export function AccountForm({ visible, onClose, onSaved, account, preset, allowDeleteLast = false, digitalOnly = false }) {
+  const [form, setForm] = useState({ name: '', type: 'corrente', color: CHART_COLORS[1], initialCents: 0 });
 
   useEffect(() => {
     if (!visible) return;
-    setForm(
-      account
-        ? {
-            name: account.name,
-            type: account.type,
-            emoji: account.emoji,
-            color: account.color,
-            initialCents: account.initial_cents,
-          }
-        : { name: '', type: 'corrente', emoji: '🏦', color: CHART_COLORS[1], initialCents: 0 }
-    );
-  }, [visible, account]);
+    if (account) {
+      setForm({
+        name: account.name,
+        type: account.type,
+        color: account.color,
+        initialCents: account.initial_cents,
+      });
+      return;
+    }
+    const type = preset?.type ?? 'corrente';
+    setForm({
+      name: preset?.name ?? '',
+      type,
+      color: preset?.color ?? CHART_COLORS[1],
+      initialCents: 0,
+    });
+  }, [visible, account, preset]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   function handleSave() {
     if (!form.name.trim()) {
-      Alert.alert('Falta o nome', 'Dê um nome pra conta (ex.: Nubank, Carteira).');
+      Alert.alert('Falta o nome', 'Dê um nome pra conta (ex.: Nubank, Itaú).');
       return;
     }
     db.saveAccount({
       id: account?.id,
       name: form.name.trim(),
       type: form.type,
-      emoji: form.emoji || '🏦',
       color: form.color,
       initialCents: form.initialCents,
     });
@@ -48,18 +51,29 @@ export function AccountForm({ visible, onClose, onSaved, account }) {
   }
 
   function handleDelete() {
-    Alert.alert('Apagar conta', 'Os lançamentos dela ficam salvos, mas sem conta vinculada. Continuar?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Apagar',
-        style: 'destructive',
-        onPress: () => {
-          db.deleteAccount(account.id);
-          onSaved?.();
-          onClose();
-        },
-      },
-    ]);
+    const others = db.getAccounts().filter((a) => a.id !== account.id);
+    if (others.length === 0 && !allowDeleteLast) {
+      Alert.alert('Essa é sua única conta', 'O app precisa de pelo menos uma conta. Cadastre outra antes de apagar esta.');
+      return;
+    }
+    const uses = db.countAccountUse(account.id);
+    const target = others.find((a) => isCashAccount(a) === isCashAccount(account)) ?? others[0];
+    const move = uses > 0 && target;
+    const remove = (moveToId) => {
+      db.deleteAccount(account.id, moveToId);
+      onSaved?.();
+      onClose();
+    };
+    Alert.alert(
+      'Apagar conta',
+      move
+        ? `${uses} ${uses === 1 ? 'lançamento é' : 'lançamentos são'} dessa conta. Eles e o saldo dela passam pra ${target.name}. Continuar?`
+        : 'Continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Apagar', style: 'destructive', onPress: () => remove(move ? target.id : null) },
+      ]
+    );
   }
 
   return (
@@ -76,33 +90,31 @@ export function AccountForm({ visible, onClose, onSaved, account }) {
       }
     >
       <Field label="Nome">
-        <TextField value={form.name} onChangeText={(t) => set({ name: t })} placeholder="Ex.: Nubank" maxLength={30} />
+        <TextField value={form.name} onChangeText={(t) => set({ name: t })} placeholder="Ex.: Nubank, Itaú" maxLength={30} />
       </Field>
 
       <Field label="Tipo">
         <PickerField
           label="Tipo de conta"
           value={form.type}
-          onChange={(type) => {
-            const info = ACCOUNT_TYPES.find((t) => t.key === type);
-            set({ type, emoji: info?.emoji ?? form.emoji });
-          }}
-          options={ACCOUNT_TYPES.map((t) => ({ key: t.key, label: t.label, emoji: t.emoji }))}
+          onChange={(type) => set({ type })}
+          options={ACCOUNT_TYPES.filter((t) => !digitalOnly || t.group === 'digital').map((t) => ({ key: t.key, label: t.label, icon: t.icon, color: form.color }))}
         />
       </Field>
 
-      <Field label="Saldo inicial" hint="Quanto tinha nessa conta quando você começou a usar o app.">
+      <Field
+        label={account ? 'Saldo inicial' : 'Saldo de hoje'}
+        hint={account ? 'Quanto tinha nessa conta quando você começou a usar o app.' : 'Quanto tem nessa conta agora. Pode deixar zerado e ajustar depois.'}
+      >
         <MoneyField key={account?.id ?? 'new-account'} cents={form.initialCents} onChange={(c) => set({ initialCents: c })} big={false} />
       </Field>
 
-      <Field label="Ícone e cor">
+      <Field label="Cor">
         <EmojiColorField
-          emoji={form.emoji}
           color={form.color}
-          onEmoji={(e) => set({ emoji: e })}
           onColor={(c) => set({ color: c })}
-          emojis={ACCOUNT_EMOJIS}
-          colorOptions={CHART_COLORS}
+          emojis={[]}
+          colorOptions={preset && !CHART_COLORS.includes(preset.color) ? [preset.color, ...CHART_COLORS] : CHART_COLORS}
         />
       </Field>
     </Sheet>

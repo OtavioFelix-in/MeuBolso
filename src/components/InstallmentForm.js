@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as db from '../db';
-import { PAYMENT_METHODS, fontForWeight } from '../theme';
+import { PAYMENT_METHODS, accountOption, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { addMonths, monthLabel, monthOf, today } from '../utils/date';
 import { formatMoney, splitInstallments } from '../utils/money';
@@ -171,12 +171,12 @@ export default function InstallmentForm({ visible, onClose, onSaved, installment
           value={form.accountId}
           onChange={(id) => set({ accountId: id })}
           allowEmpty
-          options={accounts.map((a) => ({ key: a.id, label: a.name, emoji: a.emoji }))}
+          options={accounts.map(accountOption)}
         />
       </Field>
 
       <Field label="Forma de pagamento">
-        <ChipRow options={PAYMENT_METHODS} value={form.paymentMethod} onChange={(m) => set({ paymentMethod: m })} allowEmpty />
+        <ChipRow options={PAYMENT_METHODS} value={form.paymentMethod} onChange={(m) => set({ paymentMethod: m })} allowEmpty showEmpty={false} />
       </Field>
 
       <SwitchRow

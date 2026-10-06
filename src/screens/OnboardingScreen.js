@@ -1,37 +1,47 @@
-// Primeiro acesso. Fluxo curto em passos: boas-vindas → nome → saldo → renda
-// fixa → notificações → pronto. Cada passo grava na hora e o passo atual fica
-// salvo, então é retomável se o app fechar no meio.
+// Primeiro acesso. Fluxo curto em passos: boas-vindas → nome → contas →
+// dinheiro em espécie → renda fixa → notificações → biometria → pronto. Cada
+// passo grava na hora e o passo atual fica salvo, então é retomável se o app
+// fechar no meio.
 
+import { Feather } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Animated, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Rect } from 'react-native-svg';
 import * as db from '../db';
 import { setupNotifications } from '../notifications/notifications';
 import { authenticate, canUseLock, setLockEnabled } from '../security/auth';
 import { useTheme } from '../theme-context';
-import { MoneyField, StepperField, TextField } from '../components/fields';
-import { Button, ProgressBar } from '../components/ui';
-import { fontForWeight } from '../theme';
+import { AccountForm } from '../components/CatalogForms';
+import { MoneyField, PickerField, StepperField, TextField } from '../components/fields';
+import { Button, Divider, IconBubble, ProgressBar } from '../components/ui';
+import { useTapAnim } from '../hooks/useTapAnim';
+import { BANK_PRESETS, RADIUS, accountIcon, accountOption, fontForWeight, isCashAccount } from '../theme';
+import { formatMoney } from '../utils/money';
 
 // Índices dos passos (guardados em settings pra retomar de onde parou).
 const WELCOME = 0;
 const NAME = 1;
-const BALANCE = 2;
-const SALARY = 3;
-const NOTIF = 4;
-const SECURITY = 5;
-const DONE = 6;
+const ACCOUNTS = 2;
+const CASH = 3;
+const SALARY = 4;
+const NOTIF = 5;
+const SECURITY = 6;
+const DONE = 7;
 
 export default function OnboardingScreen({ onFinish }) {
   const { colors } = useTheme();
 
   const [step, setStep] = useState(() => db.getOnboardingStep());
   const [name, setName] = useState(() => db.getUserName());
-  const [balance, setBalance] = useState(0);
+  const [accounts, setAccounts] = useState(() => db.getAccounts());
+  const [accountForm, setAccountForm] = useState(null);
+  const [hasCash, setHasCash] = useState(() => Boolean(db.getCashAccount()));
+  const [cash, setCash] = useState(() => db.getCashAccount()?.initial_cents ?? 0);
   const [hasSalary, setHasSalary] = useState(true);
   const [salary, setSalary] = useState(0);
   const [salaryDay, setSalaryDay] = useState(5);
+  const [salaryAccountId, setSalaryAccountId] = useState(null);
   const [lockAvailable, setLockAvailable] = useState(false);
   const scrollRef = useRef(null);
 
@@ -49,6 +59,15 @@ export default function OnboardingScreen({ onFinish }) {
   }, []);
 
   const firstName = name.trim().split(/\s+/)[0] || '';
+  const digitalAccounts = accounts.filter((a) => !isCashAccount(a));
+  const cashOnly = digitalAccounts.length === 0;
+  const bankOptions = BANK_PRESETS.filter((b) => !accounts.some((a) => a.name === b.name));
+
+  function reloadAccounts() {
+    const list = db.getAccounts();
+    setAccounts(list);
+    if (!list.some((a) => a.id === salaryAccountId)) setSalaryAccountId(list[0]?.id ?? null);
+  }
 
   function go(next) {
     Keyboard.dismiss();
@@ -59,8 +78,12 @@ export default function OnboardingScreen({ onFinish }) {
   function advance() {
     // Grava o dado do passo atual antes de seguir.
     if (step === NAME) db.setUserName(name);
-    if (step === BALANCE) db.setInitialBalance(balance);
-    if (step === SALARY && hasSalary) db.setOnboardingSalary(salary, salaryDay);
+    if (step === CASH) {
+      if (cashOnly || hasCash) db.setCashAccount(cash);
+      else db.removeCashAccount();
+      reloadAccounts();
+    }
+    if (step === SALARY && hasSalary) db.setOnboardingSalary(salary, salaryDay, salaryAccountId);
     go(step + 1);
   }
 
@@ -86,7 +109,8 @@ export default function OnboardingScreen({ onFinish }) {
   const nameValid = name.trim().length >= 2;
   // Passos com teclado ficam alinhados no topo: centralizar empurrava o campo
   // e o botão "Continuar" pra trás do teclado no Android (tela ficava cortada).
-  const hasKeyboard = step === NAME || step === BALANCE || (step === SALARY && hasSalary);
+  const hasKeyboard =
+    step === NAME || step === ACCOUNTS || (step === CASH && (cashOnly || hasCash)) || (step === SALARY && hasSalary);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'bottom']}>
@@ -128,25 +152,67 @@ export default function OnboardingScreen({ onFinish }) {
             </Panel>
           ) : null}
 
-          {step === BALANCE ? (
+          {step === ACCOUNTS ? (
             <Panel
-              emoji="🏦"
-              title={firstName ? `Quanto você tem hoje, ${firstName}?` : 'Quanto você tem hoje?'}
-              subtitle="O saldo atual da sua conta. Pode deixar em branco e ajustar depois."
+              icon="credit-card"
+              title={firstName ? `Onde está o seu dinheiro, ${firstName}?` : 'Onde está o seu dinheiro?'}
+              subtitle="Cadastre as contas de banco e carteiras digitais que você usa, com o saldo de hoje. Outras podem ser adicionadas depois, na Carteira."
             >
-              <MoneyField
-                cents={balance}
-                onChange={setBalance}
-                autoFocus
-                color={colors.primary}
-                returnKeyType="next"
-                onSubmitEditing={advance}
-              />
+              {digitalAccounts.length > 0 ? (
+                <View style={[styles(colors).list, { marginBottom: 20 }]}>
+                  {digitalAccounts.map((a, i) => (
+                    <View key={a.id}>
+                      {i > 0 ? <Divider /> : null}
+                      <Pressable onPress={() => setAccountForm({ account: a })} style={styles(colors).accountRow}>
+                        <IconBubble icon={accountIcon(a)} color={a.color} size={36} />
+                        <Text style={styles(colors).accountName} numberOfLines={1}>{a.name}</Text>
+                        <Text style={styles(colors).accountValue}>{formatMoney(a.initial_cents)}</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              <Text style={styles(colors).fieldLabel}>{digitalAccounts.length > 0 ? 'Adicionar outra' : 'Toque no seu banco'}</Text>
+              <View style={styles(colors).bankGrid}>
+                {bankOptions.map((b) => (
+                  <BankOption key={b.name} label={b.label ?? b.name} color={b.color} onPress={() => setAccountForm({ preset: b })} />
+                ))}
+                <BankOption label="Outro" color={colors.textMuted} onPress={() => setAccountForm({})} />
+              </View>
             </Panel>
           ) : null}
 
+          {step === CASH ? (
+            cashOnly ? (
+              <Panel
+                icon="dollar-sign"
+                title="Quanto você tem em espécie hoje?"
+                subtitle="Vamos começar só com o dinheiro físico. Quando quiser, cadastre uma conta bancária na Carteira."
+              >
+                <MoneyField cents={cash} onChange={setCash} autoFocus color={colors.primary} returnKeyType="next" onSubmitEditing={advance} />
+              </Panel>
+            ) : (
+              <Panel
+                icon="dollar-sign"
+                title="Você também tem dinheiro em espécie?"
+                subtitle="Notas e moedas ficam separadas das contas digitais, pra você saber exatamente onde está cada real."
+              >
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: hasCash ? 18 : 0 }}>
+                  <Button title="Tenho" variant={hasCash ? 'primary' : 'ghost'} style={{ flex: 1 }} onPress={() => setHasCash(true)} />
+                  <Button title="Não tenho" variant={!hasCash ? 'primary' : 'ghost'} style={{ flex: 1 }} onPress={() => setHasCash(false)} />
+                </View>
+                {hasCash ? (
+                  <>
+                    <Text style={styles(colors).fieldLabel}>Quanto tem agora</Text>
+                    <MoneyField cents={cash} onChange={setCash} autoFocus color={colors.primary} returnKeyType="next" onSubmitEditing={advance} />
+                  </>
+                ) : null}
+              </Panel>
+            )
+          ) : null}
+
           {step === SALARY ? (
-            <Panel emoji="💼" title="Você tem uma renda fixa mensal?" subtitle="Se tiver, ela entra sozinha todo mês pra você não precisar lançar.">
+            <Panel icon="briefcase" title="Você tem uma renda fixa mensal?" subtitle="Se tiver, ela entra sozinha todo mês pra você não precisar lançar.">
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: hasSalary ? 18 : 0 }}>
                 <Button title="Tenho" variant={hasSalary ? 'primary' : 'ghost'} style={{ flex: 1 }} onPress={() => setHasSalary(true)} />
                 <Button title="Não tenho" variant={!hasSalary ? 'primary' : 'ghost'} style={{ flex: 1 }} onPress={() => setHasSalary(false)} />
@@ -164,6 +230,17 @@ export default function OnboardingScreen({ onFinish }) {
                   />
                   <Text style={[styles(colors).fieldLabel, { marginTop: 16 }]}>Cai todo dia</Text>
                   <StepperField value={salaryDay} onChange={setSalaryDay} min={1} max={31} suffix="do mês" />
+                  {accounts.length > 1 ? (
+                    <>
+                      <Text style={[styles(colors).fieldLabel, { marginTop: 16 }]}>Cai na conta</Text>
+                      <PickerField
+                        label="Cai na conta"
+                        value={salaryAccountId ?? accounts[0]?.id}
+                        onChange={setSalaryAccountId}
+                        options={accounts.map(accountOption)}
+                      />
+                    </>
+                  ) : null}
                 </>
               ) : null}
             </Panel>
@@ -171,7 +248,7 @@ export default function OnboardingScreen({ onFinish }) {
 
           {step === NOTIF ? (
             <Panel
-              emoji="🔔"
+              icon="bell"
               title="Quer que a gente te lembre?"
               subtitle="Avisos de contas a vencer e um lembrete pra registrar os gastos. Você escolhe o que receber depois, nos Ajustes."
             />
@@ -179,7 +256,7 @@ export default function OnboardingScreen({ onFinish }) {
 
           {step === SECURITY ? (
             <Panel
-              emoji="🔒"
+              icon="lock"
               title="Proteger com biometria?"
               subtitle={
                 lockAvailable
@@ -191,7 +268,7 @@ export default function OnboardingScreen({ onFinish }) {
 
           {step === DONE ? (
             <Hero
-              emoji="🎉"
+              icon={<Feather name="check" size={46} color={colors.primary} />}
               title={firstName ? `Tudo pronto, ${firstName}!` : 'Tudo pronto!'}
               subtitle="Seu app está configurado. Toque no + a qualquer momento pra registrar um gasto ou uma receita."
             />
@@ -207,12 +284,15 @@ export default function OnboardingScreen({ onFinish }) {
             <Button title="Continuar" onPress={advance} disabled={!nameValid} />
           ) : null}
 
-          {step === BALANCE ? (
-            <>
-              <Button title="Continuar" onPress={advance} />
-              <Button title="Pular por enquanto" variant="ghost" onPress={() => go(step + 1)} />
-            </>
+          {step === ACCOUNTS ? (
+            cashOnly ? (
+              <Button title="Uso apenas dinheiro em espécie" variant="ghost" onPress={() => go(CASH)} />
+            ) : (
+              <Button title="Continuar" onPress={() => go(CASH)} />
+            )
           ) : null}
+
+          {step === CASH ? <Button title="Continuar" onPress={advance} /> : null}
 
           {step === SALARY ? (
             <Button title="Continuar" onPress={advance} disabled={hasSalary && salary <= 0} />
@@ -220,7 +300,7 @@ export default function OnboardingScreen({ onFinish }) {
 
           {step === NOTIF ? (
             <>
-              <Button title="Ativar lembretes" icon="🔔" onPress={enableNotifications} />
+              <Button title="Ativar lembretes" feather="bell" onPress={enableNotifications} />
               <Button title="Agora não" variant="ghost" onPress={() => go(step + 1)} />
             </>
           ) : null}
@@ -228,7 +308,7 @@ export default function OnboardingScreen({ onFinish }) {
           {step === SECURITY ? (
             lockAvailable ? (
               <>
-                <Button title="Ativar biometria" icon="🔒" onPress={enableLock} />
+                <Button title="Ativar biometria" feather="lock" onPress={enableLock} />
                 <Button title="Agora não" variant="ghost" onPress={() => go(step + 1)} />
               </>
             ) : (
@@ -244,6 +324,16 @@ export default function OnboardingScreen({ onFinish }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <AccountForm
+        visible={Boolean(accountForm)}
+        account={accountForm?.account}
+        preset={accountForm?.preset}
+        allowDeleteLast
+        digitalOnly
+        onClose={() => setAccountForm(null)}
+        onSaved={reloadAccounts}
+      />
     </SafeAreaView>
   );
 }
@@ -264,8 +354,8 @@ function WalletIcon({ size = 54 }) {
   );
 }
 
-// Bloco central com ícone/emoji grande, título e subtítulo (boas-vindas e final).
-function Hero({ emoji, icon, title, subtitle }) {
+// Bloco central com ícone grande, título e subtítulo (boas-vindas e final).
+function Hero({ icon, title, subtitle }) {
   const { colors } = useTheme();
   return (
     <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
@@ -280,31 +370,61 @@ function Hero({ emoji, icon, title, subtitle }) {
           marginBottom: 24,
         }}
       >
-        {icon ?? <Text style={{ fontSize: 48 }}>{emoji}</Text>}
+        {icon}
       </View>
       <Text style={{ fontSize: 26, fontFamily: fontForWeight('800'), color: colors.text, textAlign: 'center' }}>{title}</Text>
-      <Text style={{ fontSize: 15, color: colors.textMuted, textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
+      <Text style={{ fontSize: 15, fontFamily: fontForWeight('400'), color: colors.textMuted, textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
         {subtitle}
       </Text>
     </View>
   );
 }
 
-// Passo com formulário: emoji menor, título, subtítulo e os campos embaixo.
-function Panel({ emoji, title, subtitle, children }) {
+// Passo com formulário: ícone menor, título, subtítulo e os campos embaixo.
+function Panel({ icon, title, subtitle, children }) {
   const { colors } = useTheme();
   return (
     <View>
-      {emoji ? <Text style={{ fontSize: 40 }}>{emoji}</Text> : null}
-      <Text style={{ fontSize: 24, fontFamily: fontForWeight('800'), color: colors.text, marginTop: emoji ? 12 : 0 }}>{title}</Text>
+      {icon ? <IconBubble icon={icon} size={52} /> : null}
+      <Text style={{ fontSize: 24, fontFamily: fontForWeight('800'), color: colors.text, marginTop: icon ? 14 : 0 }}>{title}</Text>
       {subtitle ? (
-        <Text style={{ fontSize: 14, color: colors.textMuted, marginTop: 8, lineHeight: 21 }}>{subtitle}</Text>
+        <Text style={{ fontSize: 14, fontFamily: fontForWeight('400'), color: colors.textMuted, marginTop: 8, lineHeight: 21 }}>{subtitle}</Text>
       ) : null}
       {children ? <View style={{ marginTop: 24 }}>{children}</View> : null}
     </View>
   );
 }
 
+function BankOption({ label, color, onPress }) {
+  const { colors } = useTheme();
+  const { scale, onPressIn, onPressOut } = useTapAnim(0.94);
+  return (
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} style={styles(colors).bankCell}>
+      <Animated.View style={[styles(colors).bank, { transform: [{ scale }] }]}>
+        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+        <Text style={{ flex: 1, fontSize: 13, fontFamily: fontForWeight('600'), color: colors.text }} numberOfLines={1}>{label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 const styles = (colors) => ({
   fieldLabel: { fontSize: 13, fontFamily: fontForWeight('700'), color: colors.textMuted, marginBottom: 7 },
+  list: { backgroundColor: colors.card, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14 },
+  accountRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  accountName: { flex: 1, fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text },
+  accountValue: { fontSize: 15, fontFamily: fontForWeight('700'), color: colors.text },
+  bankGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
+  bankCell: { width: '48.5%' },
+  bank: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
 });

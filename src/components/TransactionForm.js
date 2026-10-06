@@ -5,10 +5,11 @@
 // A forma de pagamento direciona o gasto: crédito -> cartão; resto -> conta.
 
 import { useEffect, useMemo, useState } from 'react';
+import { Feather } from '@expo/vector-icons';
 import { Alert, Image, Pressable, Text, View } from 'react-native';
 import { useApp } from '../app-context';
 import * as db from '../db';
-import { PAYMENT_METHODS, fontForWeight } from '../theme';
+import { PAYMENT_METHODS, accountOption, fontForWeight, isCashAccount } from '../theme';
 import { useTheme } from '../theme-context';
 import { currentMonth, today } from '../utils/date';
 import { deleteReceipt, pickReceipt } from '../utils/receipts';
@@ -63,11 +64,10 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
         paid: transaction.paid === 1,
       });
     } else {
-      const lastAccount = db.getSetting('last_account');
       setForm({
         ...EMPTY(defaultKind, defaultDateFor(month)),
         categoryId: presetCategoryId ?? null,
-        accountId: lastAccount ? Number(lastAccount) : accounts[0]?.id ?? null,
+        accountId: db.getDefaultAccountId(),
       });
     }
   }, [visible, transaction, defaultKind, presetCategoryId, month]);
@@ -78,9 +78,20 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
   const isCredit = form.paymentMethod === 'credito';
   const locked = Boolean(transaction?.installment_id);
 
+  function accountFor(method) {
+    const current = accounts.find((a) => a.id === form.accountId);
+    if (method === 'dinheiro') return accounts.find(isCashAccount)?.id ?? form.accountId;
+    if (current && isCashAccount(current) && method) return accounts.find((a) => !isCashAccount(a))?.id ?? form.accountId;
+    return form.accountId;
+  }
+
   function handleSave() {
     if (form.amountCents <= 0) {
       Alert.alert('Falta o valor', 'Digite um valor maior que zero.');
+      return;
+    }
+    if (!isCredit && !form.accountId) {
+      Alert.alert('Falta a conta', 'Escolha de qual conta o dinheiro sai ou em qual ele entra.');
       return;
     }
 
@@ -193,14 +204,14 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
             <TypeCard
               title="Única"
               subtitle="só neste mês"
-              icon="1×"
+              icon="check"
               active={!form.recurring}
               onPress={() => set({ recurring: false })}
             />
             <TypeCard
               title="Recorrente"
               subtitle="repete todo mês"
-              icon="🔁"
+              icon="repeat"
               active={form.recurring}
               onPress={() => set({ recurring: true })}
             />
@@ -221,7 +232,7 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
             <StepperField value={form.dueDay} onChange={(v) => set({ dueDay: v })} min={1} max={31} suffix="do mês" />
           </Field>
           <SwitchRow
-            emoji="📊"
+            icon="bar-chart-2"
             label="O valor muda todo mês"
             hint="Marque para água, energia... (vira conta variável). O valor acima fica como estimativa."
             value={form.variable}
@@ -242,8 +253,9 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
         <ChipRow
           options={PAYMENT_METHODS}
           value={form.paymentMethod}
-          onChange={(m) => set({ paymentMethod: m, cardId: m === 'credito' ? form.cardId : null })}
+          onChange={(m) => set({ paymentMethod: m, cardId: m === 'credito' ? form.cardId : null, accountId: accountFor(m) })}
           allowEmpty
+          showEmpty={false}
         />
       </Field>
 
@@ -254,7 +266,7 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
             placeholder={cards.length === 0 ? 'Nenhum cartão cadastrado' : 'Escolher cartão'}
             value={form.cardId}
             onChange={(id) => set({ cardId: id })}
-            options={cards.map((c) => ({ key: c.id, label: c.name, emoji: '💳' }))}
+            options={cards.map((c) => ({ key: c.id, label: c.name, icon: 'credit-card', color: c.color }))}
           />
         </Field>
       ) : (
@@ -264,8 +276,7 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
             placeholder="Escolher conta"
             value={form.accountId}
             onChange={(id) => set({ accountId: id })}
-            allowEmpty
-            options={accounts.map((a) => ({ key: a.id, label: a.name, emoji: a.emoji }))}
+            options={accounts.map(accountOption)}
           />
         </Field>
       )}
@@ -281,7 +292,7 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
 
       {!form.recurring ? (
         <SwitchRow
-          emoji={isIncome ? '💰' : '✅'}
+          icon={isIncome ? 'download' : 'check-circle'}
           label={isIncome ? 'Já recebi' : 'Já paguei'}
           hint="Desmarque para deixar como previsto — aparece nos vencimentos."
           value={form.paid}
@@ -304,7 +315,7 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
               <Pressable onPress={() => set({ receiptUri: null })}><Text style={{ color: colors.expense, fontFamily: fontForWeight('700') }}>Remover</Text></Pressable>
             </View>
           ) : (
-            <Button title="Anexar imagem" icon="📎" variant="ghost" onPress={handleReceipt} />
+            <Button title="Anexar imagem" feather="paperclip" variant="ghost" onPress={handleReceipt} />
           )}
         </Field>
       ) : null}
@@ -334,7 +345,7 @@ function TypeCard({ title, subtitle, icon, active, onPress }) {
         alignItems: 'center',
       }}
     >
-      <Text style={{ fontSize: 18 }}>{icon}</Text>
+      <Feather name={icon} size={18} color={active ? colors.primary : colors.textMuted} />
       <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: active ? colors.primary : colors.text, marginTop: 4 }}>{title}</Text>
       <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>{subtitle}</Text>
     </Pressable>

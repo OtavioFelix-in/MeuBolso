@@ -85,20 +85,42 @@ export const CHART_COLORS = [
 ];
 
 export const ACCOUNT_TYPES = [
-  { key: 'corrente', label: 'Conta corrente', emoji: '🏦' },
-  { key: 'poupanca', label: 'Poupança', emoji: '🐷' },
-  { key: 'dinheiro', label: 'Dinheiro', emoji: '💵' },
-  { key: 'credito', label: 'Cartão de crédito', emoji: '💳' },
-  { key: 'vale', label: 'Vale / benefício', emoji: '🎟️' },
+  { key: 'corrente', label: 'Conta corrente', icon: 'credit-card', group: 'digital' },
+  { key: 'poupanca', label: 'Poupança', icon: 'archive', group: 'digital' },
+  { key: 'pagamento', label: 'Conta digital / carteira de app', icon: 'smartphone', group: 'digital' },
+  { key: 'vale', label: 'Vale / benefício', icon: 'tag', group: 'digital' },
+  { key: 'dinheiro', label: 'Dinheiro em espécie', icon: 'dollar-sign', group: 'fisico' },
 ];
 
+export const isCashAccount = (account) => account?.type === 'dinheiro';
+
+export const accountIcon = (account) => ACCOUNT_TYPES.find((t) => t.key === account?.type)?.icon ?? 'credit-card';
+
+export const accountOption = (account) => ({ key: account.id, label: account.name, icon: accountIcon(account), color: account.color });
+
+export const BANK_PRESETS = [
+  { name: 'Nubank', color: '#820AD1', type: 'corrente' },
+  { name: 'Inter', color: '#FF7A00', type: 'corrente' },
+  { name: 'Itaú', color: '#EC7000', type: 'corrente' },
+  { name: 'Bradesco', color: '#CC092F', type: 'corrente' },
+  { name: 'Banco do Brasil', label: 'BB', color: '#F2B705', type: 'corrente' },
+  { name: 'Caixa', color: '#005CA9', type: 'corrente' },
+  { name: 'Santander', color: '#EC0000', type: 'corrente' },
+  { name: 'C6 Bank', color: '#6B6B6B', type: 'corrente' },
+  { name: 'Sicoob', color: '#00A091', type: 'corrente' },
+  { name: 'PicPay', color: '#11C76F', type: 'pagamento' },
+  { name: 'Mercado Pago', color: '#00B1EA', type: 'pagamento' },
+];
+
+export const CASH_ACCOUNT = { name: 'Dinheiro', type: 'dinheiro', color: '#84CC16' };
+
 export const PAYMENT_METHODS = [
-  { key: 'pix', label: 'Pix', emoji: '⚡' },
-  { key: 'debito', label: 'Débito', emoji: '💳' },
-  { key: 'credito', label: 'Crédito', emoji: '💳' },
-  { key: 'dinheiro', label: 'Dinheiro', emoji: '💵' },
-  { key: 'boleto', label: 'Boleto', emoji: '🧾' },
-  { key: 'transferencia', label: 'Transferência', emoji: '🔁' },
+  { key: 'pix', label: 'Pix', icon: 'zap' },
+  { key: 'debito', label: 'Débito', icon: 'credit-card' },
+  { key: 'credito', label: 'Crédito', icon: 'credit-card' },
+  { key: 'dinheiro', label: 'Dinheiro', icon: 'dollar-sign' },
+  { key: 'boleto', label: 'Boleto', icon: 'file-text' },
+  { key: 'transferencia', label: 'Transferência', icon: 'repeat' },
 ];
 
 export const INVESTMENT_TYPES = [
@@ -149,9 +171,3 @@ export const DEFAULT_CATEGORIES = {
     { name: 'Outros', emoji: '📦', color: '#697586', subs: [] },
   ],
 };
-
-// Contas criadas junto com o banco, pra ninguém começar do zero absoluto.
-export const DEFAULT_ACCOUNTS = [
-  { name: 'Carteira', type: 'dinheiro', emoji: '💵', color: '#84CC16' },
-  { name: 'Conta do banco', type: 'corrente', emoji: '🏦', color: '#4C6FFF' },
-];

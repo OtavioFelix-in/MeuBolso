@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as db from '../db';
-import { PAYMENT_METHODS, fontForWeight } from '../theme';
+import { PAYMENT_METHODS, accountOption, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { currentMonth, monthOf } from '../utils/date';
 import { formatMoney } from '../utils/money';
-import { CategoryField, ChipRow, DateField, Field, MoneyField, StepperField, SwitchRow, TextField } from './fields';
+import { CategoryField, ChipRow, DateField, Field, MoneyField, PickerField, StepperField, SwitchRow, TextField } from './fields';
 import { Button, Sheet } from './ui';
 
 const EMPTY = {
@@ -46,16 +46,21 @@ export default function RecurrenceForm({ visible, onClose, onSaved, recurrence, 
         endMonth: recurrence.end_month,
       });
     } else {
-      setForm({ ...EMPTY, kind: defaultKind });
+      setForm({ ...EMPTY, kind: defaultKind, accountId: db.getDefaultAccountId() });
     }
   }, [visible, recurrence, defaultKind]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const isIncome = form.kind === 'income';
+  const onCard = Boolean(recurrence?.card_id);
 
   function handleSave() {
     if (!form.name.trim()) {
       Alert.alert('Falta o nome', 'Dê um nome pra essa conta (ex.: Internet, Netflix, Faculdade).');
+      return;
+    }
+    if (!onCard && !form.accountId) {
+      Alert.alert('Falta a conta', isIncome ? 'Escolha em qual conta esse valor entra.' : 'Escolha de qual conta esse valor sai.');
       return;
     }
     db.saveRecurrence({
@@ -65,7 +70,9 @@ export default function RecurrenceForm({ visible, onClose, onSaved, recurrence, 
       amountCents: form.amountCents,
       dueDay: form.dueDay,
       categoryId: form.categoryId,
-      accountId: form.accountId,
+      accountId: onCard ? null : form.accountId,
+      cardId: recurrence?.card_id ?? null,
+      period: recurrence?.period ?? 'monthly',
       paymentMethod: form.paymentMethod,
       remindDays: form.remindDays,
       variable: form.variable,
@@ -152,8 +159,20 @@ export default function RecurrenceForm({ visible, onClose, onSaved, recurrence, 
         <CategoryField kind={form.kind} value={form.categoryId} onChange={(id) => set({ categoryId: id })} />
       </Field>
 
+      {!onCard ? (
+        <Field label={isIncome ? 'Entra na conta' : 'Sai da conta'}>
+          <PickerField
+            label="Conta"
+            placeholder="Escolher conta"
+            value={form.accountId}
+            onChange={(id) => set({ accountId: id })}
+            options={accounts.map(accountOption)}
+          />
+        </Field>
+      ) : null}
+
       <Field label="Forma de pagamento">
-        <ChipRow options={PAYMENT_METHODS} value={form.paymentMethod} onChange={(m) => set({ paymentMethod: m })} allowEmpty />
+        <ChipRow options={PAYMENT_METHODS} value={form.paymentMethod} onChange={(m) => set({ paymentMethod: m })} allowEmpty showEmpty={false} />
       </Field>
 
       <Field label="Avisar quantos dias antes" style={{ marginTop: 14 }}>
@@ -161,7 +180,7 @@ export default function RecurrenceForm({ visible, onClose, onSaved, recurrence, 
       </Field>
 
       <SwitchRow
-        emoji="📊"
+        icon="bar-chart-2"
         label="O valor muda todo mês"
         hint="Marque para contas como energia e água — o valor acima vira só uma estimativa."
         value={form.variable}
@@ -169,7 +188,7 @@ export default function RecurrenceForm({ visible, onClose, onSaved, recurrence, 
       />
 
       <SwitchRow
-        emoji="🔁"
+        icon="repeat"
         label="Ativa"
         hint="Desative para parar de gerar cobranças sem perder o histórico."
         value={form.active}

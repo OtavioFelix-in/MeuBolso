@@ -1,5 +1,5 @@
 // Carteira em 3 áreas: Conta corrente, Investimentos e Cartões de crédito.
-//   Conta corrente → saldo de cada conta (aporte debita aqui automático).
+//   Conta          → contas digitais e dinheiro em espécie, separados (aporte debita aqui).
 //   Investimentos  → valor, rentabilidade, lucro, aportes (escolhe a conta).
 //   Cartões        → cadastrar vários, limite, uso, encerrar + conta × cartão.
 
@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useApp } from '../app-context';
 import * as db from '../db';
-import { INVESTMENT_TYPES, fontForWeight } from '../theme';
+import { ACCOUNT_TYPES, INVESTMENT_TYPES, accountIcon, fontForWeight, isCashAccount } from '../theme';
 import { useTheme } from '../theme-context';
 import { formatDate, monthLabel } from '../utils/date';
 import { formatMoney, formatPercent } from '../utils/money';
@@ -68,22 +68,63 @@ function AccountView() {
     [version, month]
   );
 
-  const total = accounts.reduce((s, a) => s + a.balance_cents, 0);
+  const digital = accounts.filter((a) => !isCashAccount(a));
+  const cash = accounts.filter(isCashAccount);
+  const sumOf = (list) => list.reduce((s, a) => s + a.balance_cents, 0);
+  const digitalTotal = sumOf(digital);
+  const cashTotal = sumOf(cash);
+  const openForm = (account = null) => {
+    setEditing(account);
+    setFormOpen(true);
+  };
 
   return (
     <>
       <Card style={{ marginTop: 14 }}>
-        <Muted>Saldo em conta</Muted>
-        <Text style={{ fontSize: 28, fontFamily: fontForWeight('800'), color: colors.primary, marginTop: 2 }}>{formatMoney(total)}</Text>
-        <Muted size={12} style={{ marginTop: 4 }}>somando todas as suas contas</Muted>
+        <Muted>{digital.length > 0 ? 'Saldo nas contas' : 'Dinheiro em espécie'}</Muted>
+        <Text style={{ fontSize: 28, fontFamily: fontForWeight('800'), color: colors.primary, marginTop: 2 }}>
+          {formatMoney(digital.length > 0 ? digitalTotal : cashTotal)}
+        </Text>
+        <Muted size={12} style={{ marginTop: 4 }}>
+          {digital.length > 1 ? `somando suas ${digital.length} contas digitais` : digital.length === 1 ? digital[0].name : 'notas e moedas'}
+        </Muted>
+        {digital.length > 0 && cash.length > 0 ? (
+          <>
+            <Divider style={{ marginVertical: 12 }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Muted>Em espécie</Muted>
+              <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: colors.text }}>{formatMoney(cashTotal)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+              <Muted>Total</Muted>
+              <Text style={{ fontSize: 14, fontFamily: fontForWeight('700'), color: colors.text }}>{formatMoney(digitalTotal + cashTotal)}</Text>
+            </View>
+          </>
+        ) : null}
       </Card>
 
-      <Button title="Registrar receita" icon="＋" variant="soft" onPress={() => openTransaction(null, 'income')} style={{ marginTop: 12 }} />
+      <SectionTitle action="+ nova" onAction={() => openForm()}>Contas digitais</SectionTitle>
+      {digital.length === 0 ? (
+        <Card>
+          <EmptyState icon="credit-card" title="Nenhuma conta digital" subtitle="Cadastre sua conta de banco, poupança ou carteira de app." action="Cadastrar conta" onAction={() => openForm()} />
+        </Card>
+      ) : (
+        <AccountList accounts={digital} onPress={openForm} />
+      )}
+
+      {cash.length > 0 ? (
+        <>
+          <SectionTitle>Dinheiro em espécie</SectionTitle>
+          <AccountList accounts={cash} onPress={openForm} />
+        </>
+      ) : null}
+
+      <Button title="Registrar receita" feather="plus" variant="soft" onPress={() => openTransaction(null, 'income')} style={{ marginTop: 18 }} />
 
       <SectionTitle>Renda fixa mensal</SectionTitle>
       <Card onPress={() => setSalaryOpen(true)}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconBubble emoji="💼" color={colors.income} />
+          <IconBubble icon="briefcase" color={colors.income} />
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>
               {salary.configured && salary.cents > 0 ? `Salário: ${formatMoney(salary.cents)}` : 'Configurar salário'}
@@ -100,31 +141,6 @@ function AccountView() {
 
       <CategoryManager kind="income" title="Categorias de receita" />
 
-      <SectionTitle action="+ nova" onAction={() => { setEditing(null); setFormOpen(true); }}>Suas contas</SectionTitle>
-      {accounts.length === 0 ? (
-        <Card>
-          <EmptyState emoji="🏦" title="Nenhuma conta" subtitle="Cadastre sua conta corrente, carteira, poupança." action="Cadastrar conta" onAction={() => { setEditing(null); setFormOpen(true); }} />
-        </Card>
-      ) : (
-        <Card>
-          {accounts.map((a, i) => (
-            <View key={a.id}>
-              {i > 0 ? <Divider /> : null}
-              <Pressable onPress={() => { setEditing(a); setFormOpen(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 }}>
-                <IconBubble emoji={a.emoji} color={a.color} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }}>{a.name}</Text>
-                  <Muted size={12}>saldo inicial {formatMoney(a.initial_cents)}</Muted>
-                </View>
-                <Text style={{ fontSize: 15, fontFamily: fontForWeight('700'), color: a.balance_cents >= 0 ? colors.text : colors.expense }}>
-                  {formatMoney(a.balance_cents)}
-                </Text>
-              </Pressable>
-            </View>
-          ))}
-        </Card>
-      )}
-
       {/* Onde os gastos estão indo: conta x cartão */}
       <SectionTitle>Como você paga em {monthLabel(month)}</SectionTitle>
       <Card>
@@ -133,7 +149,7 @@ function AccountView() {
         ) : (
           <>
             <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
-              <SplitStat label="Conta corrente" value={split.account_cents} percent={split.account_percent} color={colors.primary} />
+              <SplitStat label="Conta / espécie" value={split.account_cents} percent={split.account_percent} color={colors.primary} />
               <SplitStat label="Cartão de crédito" value={split.card_cents} percent={split.card_percent} color={colors.invest} />
             </View>
             <View style={{ flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden' }}>
@@ -143,7 +159,7 @@ function AccountView() {
             <Muted size={12} style={{ marginTop: 10 }}>
               {split.card_percent > split.account_percent
                 ? 'Você está concentrando os gastos no cartão de crédito.'
-                : 'A maior parte dos seus gastos sai da conta corrente.'}
+                : 'A maior parte dos seus gastos sai das suas contas.'}
             </Muted>
           </>
         )}
@@ -157,7 +173,7 @@ function AccountView() {
               <View key={t.id}>
                 {i > 0 ? <Divider /> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 }}>
-                  <IconBubble emoji={t.kind === 'income' ? '📥' : '📤'} color={t.kind === 'income' ? colors.income : colors.expense} size={36} />
+                  <IconBubble icon={t.kind === 'income' ? 'arrow-down-left' : 'arrow-up-right'} color={t.kind === 'income' ? colors.income : colors.expense} size={36} />
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontFamily: fontForWeight('600'), color: colors.text }} numberOfLines={1}>{t.description || t.category_name || 'Movimentação'}</Text>
                     <Muted size={11}>{formatDate(t.date)} · {t.account_name}</Muted>
@@ -175,6 +191,31 @@ function AccountView() {
       <AccountForm visible={formOpen} account={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSaved={refresh} />
       <SalarySheet visible={salaryOpen} current={salary} onClose={() => setSalaryOpen(false)} onSaved={refresh} />
     </>
+  );
+}
+
+function AccountList({ accounts, onPress }) {
+  const { colors } = useTheme();
+  return (
+    <Card>
+      {accounts.map((a, i) => (
+        <View key={a.id}>
+          {i > 0 ? <Divider /> : null}
+          <Pressable onPress={() => onPress(a)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 }}>
+            <IconBubble icon={accountIcon(a)} color={a.color} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontFamily: fontForWeight('600'), color: colors.text }} numberOfLines={1}>{a.name}</Text>
+              <Text style={{ fontSize: 12, fontFamily: fontForWeight('400'), color: colors.textMuted }} numberOfLines={1}>
+                {ACCOUNT_TYPES.find((t) => t.key === a.type)?.label ?? 'Conta'}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 15, fontFamily: fontForWeight('700'), color: a.balance_cents >= 0 ? colors.text : colors.expense }}>
+              {formatMoney(a.balance_cents)}
+            </Text>
+          </Pressable>
+        </View>
+      ))}
+    </Card>
   );
 }
 

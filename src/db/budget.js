@@ -2,6 +2,7 @@
 // receita), pra não inventar tabela.
 
 import { currentMonth, dueDateFor } from '../utils/date';
+import { getDefaultAccountId } from './catalog';
 import { db, getSetting, nowIso, setSetting } from './core';
 import { saveRecurrence } from './recurrences';
 import { saveTransaction } from './transactions';
@@ -25,14 +26,23 @@ export function getSalary() {
   if (!id) return { configured: false, cents: 0, day: 5, recurrenceId: null };
   const rec = db.getFirstSync('SELECT * FROM recurrences WHERE id = ? AND deleted = 0', [id]);
   if (!rec) return { configured: false, cents: 0, day: 5, recurrenceId: null };
-  return { configured: true, cents: rec.amount_cents, day: rec.due_day, recurrenceId: rec.id, active: rec.active === 1 };
+  return {
+    configured: true,
+    cents: rec.amount_cents,
+    day: rec.due_day,
+    accountId: rec.account_id,
+    startMonth: rec.start_month,
+    recurrenceId: rec.id,
+    active: rec.active === 1,
+  };
 }
 
 // applyFrom = mês (YYYY-MM) a partir do qual o novo valor vale. Meses anteriores
 // (já abertos) mantêm o salário antigo; deste mês pra frente passa a ser o novo.
-export function saveSalary({ cents, day, applyFrom = currentMonth() }) {
+export function saveSalary({ cents, day, accountId, applyFrom = currentMonth() }) {
   const current = getSalary();
   const salaryCat = findCategory('Salário', 'income');
+  const account = accountId ?? current.accountId ?? getDefaultAccountId();
   const id = saveRecurrence({
     id: current.recurrenceId,
     kind: 'income',
@@ -40,17 +50,18 @@ export function saveSalary({ cents, day, applyFrom = currentMonth() }) {
     amountCents: cents,
     dueDay: day,
     categoryId: salaryCat?.id ?? null,
+    accountId: account,
     remindDays: 0,
     active: true,
-    startMonth: current.recurrenceId ? undefined : applyFrom,
+    startMonth: current.startMonth ?? applyFrom,
   });
   setSetting('salary_recurrence_id', id);
 
   // Atualiza o salário já lançado nos meses abertos a partir de applyFrom.
   db.runSync(
-    `UPDATE transactions SET amount_cents = ?, updated_at = ?
+    `UPDATE transactions SET amount_cents = ?, account_id = ?, updated_at = ?
      WHERE recurrence_id = ? AND deleted = 0 AND substr(date, 1, 7) >= ?`,
-    [cents, nowIso(), id, applyFrom]
+    [cents, account, nowIso(), id, applyFrom]
   );
 
   materializeOpenMonths();
@@ -78,6 +89,7 @@ export function setMonthSalary(month, cents) {
         amountCents: cents,
         date: dueDateFor(month, rec.due_day),
         categoryId: rec.category_id,
+        accountId: rec.account_id ?? getDefaultAccountId(),
         description: 'Salário',
         paid: 0,
         recurrenceId,

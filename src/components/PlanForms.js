@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as db from '../db';
-import { ASSET_TYPES, CHART_COLORS, INVESTMENT_TYPES, fontForWeight } from '../theme';
+import { ASSET_TYPES, CHART_COLORS, INVESTMENT_TYPES, accountOption, fontForWeight } from '../theme';
 import { useTheme } from '../theme-context';
 import { today } from '../utils/date';
 import { formatMoney } from '../utils/money';
@@ -349,7 +349,7 @@ export function AmountSheet({ visible, onClose, onConfirm, title, label, color, 
     if (visible) {
       setCents(0);
       setDate(today());
-      setAccountId(accounts && accounts.length > 0 ? accounts[0].id : null);
+      setAccountId(accounts && accounts.length > 0 ? db.getDefaultAccountId() ?? accounts[0].id : null);
     }
   }, [visible]);
 
@@ -386,8 +386,7 @@ export function AmountSheet({ visible, onClose, onConfirm, title, label, color, 
             placeholder="Escolher conta"
             value={accountId}
             onChange={setAccountId}
-            allowEmpty
-            options={accounts.map((a) => ({ key: a.id, label: a.name, emoji: a.emoji }))}
+            options={accounts.map(accountOption)}
           />
         </Field>
       ) : null}

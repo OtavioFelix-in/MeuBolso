@@ -2,6 +2,7 @@
 // caixa arredondada embaixo, e os que precisam escolher algo abrem um Sheet.
 
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Feather } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import * as db from '../db';
@@ -140,10 +141,10 @@ export function DateField({ value, onChange, placeholder = 'Escolher data' }) {
   return (
     <>
       <Pressable onPress={() => setShow(true)} style={[box, { flexDirection: 'row', alignItems: 'center' }]}>
-        <Text style={{ fontSize: 15, color: value ? colors.text : colors.textMuted, flex: 1 }}>
+        <Text style={{ fontSize: 15, fontFamily: FONT_FAMILY.regular, color: value ? colors.text : colors.textMuted, flex: 1 }}>
           {value ? formatDate(value) : placeholder}
         </Text>
-        <Text style={{ fontSize: 15 }}>📅</Text>
+        <Feather name="calendar" size={16} color={colors.textMuted} />
       </Pressable>
       {show ? (
         <DateTimePicker
@@ -170,7 +171,8 @@ export function PickerField({ label, value, options, onChange, placeholder = 'Se
   return (
     <>
       <Pressable onPress={() => setOpen(true)} style={[box, { flexDirection: 'row', alignItems: 'center' }]}>
-        <Text style={{ fontSize: 15, color: selected ? colors.text : colors.textMuted, flex: 1 }}>
+        {selected?.icon ? <Feather name={selected.icon} size={16} color={selected.color ?? colors.textMuted} style={{ marginRight: 8 }} /> : null}
+        <Text style={{ fontSize: 15, fontFamily: FONT_FAMILY.regular, color: selected ? colors.text : colors.textMuted, flex: 1 }} numberOfLines={1}>
           {selected ? `${selected.emoji ? `${selected.emoji} ` : ''}${selected.label}` : placeholder}
         </Text>
         <Text style={{ color: colors.textMuted, fontSize: 13 }}>▾</Text>
@@ -179,7 +181,8 @@ export function PickerField({ label, value, options, onChange, placeholder = 'Se
       <Sheet visible={open} onClose={() => setOpen(false)} title={label ?? placeholder} height="70%">
         {allowEmpty ? (
           <OptionRow
-            emoji="🚫"
+            icon="slash"
+            color={colors.textMuted}
             label="Nenhum"
             active={!value}
             onPress={() => {
@@ -192,6 +195,7 @@ export function PickerField({ label, value, options, onChange, placeholder = 'Se
           <OptionRow
             key={opt.key}
             emoji={opt.emoji}
+            icon={opt.icon}
             label={opt.label}
             hint={opt.hint}
             color={opt.color}
@@ -207,7 +211,7 @@ export function PickerField({ label, value, options, onChange, placeholder = 'Se
   );
 }
 
-export function OptionRow({ emoji, label, hint, active, onPress, color, right }) {
+export function OptionRow({ emoji, icon, label, hint, active, onPress, color, right }) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -221,7 +225,7 @@ export function OptionRow({ emoji, label, hint, active, onPress, color, right })
         pressed && { opacity: 0.7 },
       ]}
     >
-      {emoji ? <IconBubble emoji={emoji} color={color ?? colors.primary} size={36} /> : null}
+      {icon || emoji ? <IconBubble icon={icon} emoji={emoji} color={color ?? colors.primary} size={36} /> : null}
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 15, fontFamily: FONT_FAMILY.semibold, color: colors.text }}>{label}</Text>
         {hint ? <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2, fontFamily: FONT_FAMILY.regular }}>{hint}</Text> : null}
@@ -314,10 +318,10 @@ export function CategoryField({ kind, value, onChange }) {
 }
 
 // Linha de chips horizontal (formas de pagamento, contas, filtros...).
-export function ChipRow({ options, value, onChange, allowEmpty }) {
+export function ChipRow({ options, value, onChange, allowEmpty, showEmpty = allowEmpty }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
-      {allowEmpty ? (
+      {showEmpty ? (
         <Chip label="Todas" active={!value} onPress={() => onChange(null)} />
       ) : null}
       {options.map((opt) => (
@@ -325,6 +329,7 @@ export function ChipRow({ options, value, onChange, allowEmpty }) {
           key={opt.key}
           label={opt.label}
           emoji={opt.emoji}
+          icon={opt.icon}
           color={opt.color}
           active={opt.key === value}
           onPress={() => onChange(opt.key === value && allowEmpty ? null : opt.key)}
@@ -334,10 +339,11 @@ export function ChipRow({ options, value, onChange, allowEmpty }) {
   );
 }
 
-export function SwitchRow({ label, hint, value, onChange, emoji }) {
+export function SwitchRow({ label, hint, value, onChange, emoji, icon }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.switchRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
+      {icon ? <Feather name={icon} size={18} color={colors.textMuted} /> : null}
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 15, fontFamily: FONT_FAMILY.semibold, color: colors.text }}>
           {emoji ? `${emoji}  ` : ''}
