@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Rect } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as db from '../db';
 import { setupNotifications } from '../notifications/notifications';
 import { authenticate, canUseLock, setLockEnabled } from '../security/auth';
@@ -132,7 +132,7 @@ export default function OnboardingScreen({ onFinish }) {
           <View style={{ flex: 1, justifyContent: hasKeyboard ? 'flex-start' : 'center', paddingTop: hasKeyboard ? 12 : 0 }}>
           {step === WELCOME ? (
             <Hero
-              icon={<WalletIcon size={54} />}
+              icon={<BrandMark color={colors.primary} hole={colors.primaryLight} />}
               title="Bem-vindo ao Meu Bolso"
               subtitle="Controle financeiro simples, offline e sem anúncios. Vamos deixar tudo do seu jeito em menos de um minuto."
             />
@@ -338,18 +338,13 @@ export default function OnboardingScreen({ onFinish }) {
   );
 }
 
-// Carteira marrom desenhada em SVG (não há um emoji bom de carteira marrom).
-function WalletIcon({ size = 54 }) {
+// Marca do app: o "M" com a carteira (a mesma do ícone).
+function BrandMark({ size = 58, color, hole }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 64 64">
-      {/* corpo da carteira */}
-      <Rect x="7" y="15" width="50" height="35" rx="7" fill="#6B4326" />
-      <Rect x="7" y="20" width="50" height="30" rx="7" fill="#8B5A2B" />
-      {/* costura / vinco */}
-      <Rect x="7" y="26" width="50" height="2.4" fill="#5A3820" opacity="0.55" />
-      {/* bolso do cartão + fecho */}
-      <Rect x="33" y="29" width="24" height="13" rx="6.5" fill="#6B4326" />
-      <Circle cx="43" cy="35.5" r="3.4" fill="#E8C9A0" />
+    <Svg width={size} height={(size * 241) / 318} viewBox="203 250 318 241">
+      <Path d="M224.5 469V272L341.5 389L458.5 272V334" fill="none" stroke={color} strokeWidth={44} strokeLinecap="round" strokeLinejoin="round" />
+      <Rect x="387" y="371" width="134" height="98" rx="20" fill={color} />
+      <Circle cx="485.5" cy="420" r="14" fill={hole} />
     </Svg>
   );
 }

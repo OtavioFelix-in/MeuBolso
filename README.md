@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon.png" width="110" alt="Meu Bolso" />
+<img src="assets/logo.png" width="110" alt="Meu Bolso" />
 
 # Meu Bolso
 **O controle financeiro que nasceu de um gargalo meu.**
