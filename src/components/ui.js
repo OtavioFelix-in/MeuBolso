@@ -2,11 +2,11 @@
 // ativo, então trocar claro/escuro não precisa de nenhuma gambiarra por tela.
 
 import { Feather } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
-  KeyboardAvoidingView,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -14,7 +14,9 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTapAnim } from '../hooks/useTapAnim';
 import { useTheme } from '../theme-context';
 import { FONT_FAMILY, RADIUS, TABULAR_NUMS, fontForWeight } from '../theme';
@@ -287,60 +289,120 @@ export function Divider({ style }) {
 
 // ---- Bottom sheet ----
 
+// Altura do teclado na janela atual. Medir na mão (em vez de usar
+// KeyboardAvoidingView) porque dentro de um Modal edge-to-edge o
+// `behavior="height"` espreme o painel: o campo some e o rodapé desgruda do
+// teclado. Com o número em mãos dá pra encostar o painel no teclado e reduzir
+// o teto de altura na mesma conta.
+function useKeyboardHeight() {
+  const [keyboard, setKeyboard] = useState(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, (e) => setKeyboard(e.endCoordinates?.height ?? 0));
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboard(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  return keyboard;
+}
+
 // Modal que sobe de baixo, usado em todos os formulários e seletores.
 // `onBack`, quando passado, troca o X por uma seta de voltar (menu > detalhe
 // dentro do mesmo sheet, sem empilhar Modal em cima de Modal).
+//
+// O Modal do Android é uma JANELA separada da activity. Como o app roda em
+// edge-to-edge, essa janela também desenha por baixo da barra de navegação —
+// mas `useSafeAreaInsets()` lê do contexto React, ou seja, devolveria os insets
+// da activity, não os do modal. Por isso o conteúdo é embrulhado num
+// SafeAreaProvider próprio aqui dentro: ele mede a janela do modal e o rodapé
+// para de ficar atrás dos botões do celular.
 export function Sheet({ visible, onClose, onBack, title, children, footer, height = '90%' }) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
+    >
+      <SafeAreaProvider>
+        <SheetBody onClose={onClose} onBack={onBack} title={title} footer={footer} height={height}>
+          {children}
+        </SheetBody>
+      </SafeAreaProvider>
+    </Modal>
+  );
+}
+
+// `height` é o TETO do painel, em % da altura útil (tela menos a barra de
+// status e o teclado). Resolver em pixel aqui, em vez de deixar '90%' direto
+// no estilo, evita que o teto seja calculado sobre a tela inteira e o
+// cabeçalho acabe embaixo do relógio.
+function maxPanelHeight(height, usable) {
+  if (typeof height === 'number') return Math.min(height, usable);
+  const pct = parseFloat(String(height));
+  if (!Number.isFinite(pct)) return usable;
+  return Math.round((pct / 100) * usable);
+}
+
+function SheetBody({ onClose, onBack, title, children, footer, height }) {
   const { colors } = useTheme();
-  const sheetStyles = useMemo(
-    () => ({
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const keyboard = useKeyboardHeight();
+  // Com o teclado aberto o painel encosta nele: o espaço de baixo já é do
+  // teclado, então a safe area da barra de navegação sai da conta.
+  const bottomGap = keyboard > 0 ? 0 : insets.bottom;
+  const sheetStyles = useMemo(() => {
+    const usable = Math.max(windowHeight - insets.top - keyboard, 0);
+    return {
       backdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
       panel: {
         backgroundColor: colors.background,
         borderTopLeftRadius: RADIUS.xl,
         borderTopRightRadius: RADIUS.xl,
-        maxHeight: height,
-        paddingBottom: 8,
+        maxHeight: maxPanelHeight(height, usable),
+        marginBottom: keyboard,
       },
-    }),
-    [colors, height]
-  );
+    };
+  }, [colors, height, windowHeight, insets.top, keyboard]);
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView
-        style={sheetStyles.backdrop}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <Pressable style={{ flex: 1 }} onPress={onClose} />
-        <View style={sheetStyles.panel}>
-          <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
-          </View>
-          <View style={styles.sheetHeader}>
-            {onBack ? (
-              <Pressable onPress={onBack} hitSlop={10} style={{ marginRight: 2 }}>
-                <Feather name="chevron-left" size={24} color={colors.text} />
-              </Pressable>
-            ) : null}
-            <Text style={{ fontSize: 18, fontFamily: FONT_FAMILY.bold, color: colors.text, flex: 1 }}>{title}</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <Feather name="x" size={22} color={colors.textMuted} />
-            </Pressable>
-          </View>
-          <ScrollView
-            style={{ flexGrow: 0 }}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            {children}
-          </ScrollView>
-          {footer ? (
-            <View style={[styles.sheetFooter, { borderTopColor: colors.border }]}>{footer}</View>
-          ) : null}
+    <View style={sheetStyles.backdrop}>
+      <Pressable style={{ flex: 1 }} onPress={onClose} />
+      <View style={sheetStyles.panel}>
+        <View style={styles.handleWrap}>
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        <View style={styles.sheetHeader}>
+          {onBack ? (
+            <Pressable onPress={onBack} hitSlop={10} style={{ marginRight: 2 }}>
+              <Feather name="chevron-left" size={24} color={colors.text} />
+            </Pressable>
+          ) : null}
+          <Text style={{ fontSize: 18, fontFamily: FONT_FAMILY.bold, color: colors.text, flex: 1 }}>{title}</Text>
+          <Pressable onPress={onClose} hitSlop={10}>
+            <Feather name="x" size={22} color={colors.textMuted} />
+          </Pressable>
+        </View>
+        <ScrollView
+          style={{ flexGrow: 0 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: footer ? 16 : 16 + bottomGap }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {children}
+        </ScrollView>
+        {footer ? (
+          <View style={[styles.sheetFooter, { borderTopColor: colors.border, paddingBottom: 12 + bottomGap }]}>{footer}</View>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
