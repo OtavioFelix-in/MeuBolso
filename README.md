@@ -10,6 +10,8 @@
 ![SQLite](https://img.shields.io/badge/SQLite-100%25%20offline-003B57?logo=sqlite&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-APK-3DDC84?logo=android&logoColor=white)
 
+**[Site](https://otaviofelix-in.github.io/MeuBolso-Site/)** · **[Vídeo de 60 s](https://youtube.com/shorts/s7te0wb4iUE)** · **[Baixar o APK](https://github.com/OtavioFelix-in/MeuBolso-Site/releases/latest/download/MeuBolso.apk)**
+
 </div>
 
 ---
@@ -18,7 +20,8 @@
 
 Eu precisava de um app que atendesse do jeito que **eu** organizo minha vida financeira, e não encontrei nenhum que servisse. Então criei o meu.
 
-O **Meu Bolso** é 100% manual e offline: tudo fica salvo só no aparelho, sem conta, sem servidor e sem anúncio. O objetivo não é só resolver o meu problema, é ajudar qualquer pessoa que também tenha dificuldade com o próprio dinheiro a enxergar, mês a mês, pra onde ele está indo. 
+O **Meu Bolso** é 100% manual e offline: tudo fica salvo só no aparelho, sem conta, sem servidor e sem anúncio. O objetivo não é só resolver o meu problema, é ajudar qualquer pessoa que também tenha dificuldade com o próprio dinheiro a enxergar, mês a mês, pra onde ele está indo.
+
 ---
 
 ## Funcionalidades
