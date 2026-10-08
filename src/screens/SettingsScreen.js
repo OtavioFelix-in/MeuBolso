@@ -239,7 +239,7 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
         <Muted size={12} style={{ marginTop: 4 }}>
           Controle financeiro manual, offline e sem anúncios. Seus dados ficam só no seu aparelho.
         </Muted>
-        <Muted size={12} style={{ marginTop: 8 }}>Versão 1.0.0</Muted>
+        <Muted size={12} style={{ marginTop: 8 }}>Versão 1.2.0</Muted>
         <View style={{ gap: 10, marginTop: 14 }}>
           <Button title="Política de privacidade" variant="ghost" onPress={() => setLegal('privacy')} />
           <Button title="Termos de uso" variant="ghost" onPress={() => setLegal('terms')} />
@@ -282,7 +282,7 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
             <Divider />
             <MenuRow icon="database" label="Dados e backup" onPress={() => setSection('data')} />
             <Divider />
-            <MenuRow icon="info" label="Sobre" value="v1.0.0" onPress={() => setSection('about')} last />
+            <MenuRow icon="info" label="Sobre" value="v1.2.0" onPress={() => setSection('about')} last />
           </Card>
         </>
       )}

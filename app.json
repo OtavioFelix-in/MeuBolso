@@ -2,7 +2,7 @@
   "expo": {
     "name": "Meu Bolso",
     "slug": "meu-bolso",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.otavio.meubolso",
+      "versionCode": 2,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundImage": "./assets/android-icon-background.png",
