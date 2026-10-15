@@ -8,7 +8,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, View } from 'react-native';
+import { AppState, BackHandler, View } from 'react-native';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -129,6 +129,21 @@ function Root() {
     });
     return () => sub.remove();
   }, []);
+
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (sub) {
+        setSub(null);
+        return true;
+      }
+      if (tab !== 'home') {
+        setTab('home');
+        return true;
+      }
+      return false;
+    });
+    return () => handler.remove();
+  }, [sub, tab]);
 
   const openTransaction = useCallback(
     (tx = null, kind = 'expense', presetCategoryId = null) =>

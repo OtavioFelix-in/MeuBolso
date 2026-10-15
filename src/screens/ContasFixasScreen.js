@@ -26,7 +26,7 @@ export default function ContasFixasScreen() {
 
   const bills = items.filter((r) => r.kind === 'expense' && r.in_month);
   const incomes = items.filter((r) => r.kind === 'income' && r.in_month);
-  const inactive = items.filter((r) => !r.in_month);
+  const inactive = items.filter((r) => !r.in_month && !r.off_period);
 
   const totalBills = bills.reduce((sum, r) => sum + r.month_amount_cents, 0);
   const paidBills = bills.filter((r) => r.is_paid).reduce((sum, r) => sum + r.month_amount_cents, 0);

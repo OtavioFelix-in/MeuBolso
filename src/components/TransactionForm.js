@@ -90,6 +90,15 @@ export default function TransactionForm({ visible, onClose, onSaved, transaction
       Alert.alert('Falta o valor', 'Digite um valor maior que zero.');
       return;
     }
+    if (isCredit && !form.cardId) {
+      Alert.alert(
+        'Falta o cartão',
+        cards.length === 0
+          ? 'Cadastre um cartão em Carteira › Cartões para lançar no crédito.'
+          : 'Escolha em qual cartão foi a compra.'
+      );
+      return;
+    }
     if (!isCredit && !form.accountId) {
       Alert.alert('Falta a conta', 'Escolha de qual conta o dinheiro sai ou em qual ele entra.');
       return;

@@ -96,6 +96,7 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
           try {
             if (await importBackup()) {
               reload();
+              await refreshReminders().catch(() => {});
               Alert.alert('Pronto', 'Backup restaurado com sucesso.');
             }
           } catch (e) {
@@ -120,6 +121,7 @@ export default function SettingsScreen({ visible, onClose, onResetApp }) {
           onPress: () => {
             db.wipeAllData();
             db.ensureCurrentMonthOpen();
+            refreshReminders().catch(() => {});
             onClose?.();
             onResetApp?.();
           },

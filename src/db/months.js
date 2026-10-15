@@ -83,12 +83,20 @@ export function ensureCurrentMonthOpen() {
 export function getMonthProjection(month) {
   const open = isMonthOpen(month);
 
-  const recs = getRecurrencesForMonth(month).filter((r) => r.in_month);
-  let recIncome = 0;
-  let recExpense = 0;
-  for (const r of recs) {
-    if (r.kind === 'income') recIncome += r.month_amount_cents;
-    else recExpense += r.month_amount_cents;
+  const recTx = db.getFirstSync(
+    `SELECT
+       COALESCE(SUM(CASE WHEN kind = 'income'  THEN amount_cents ELSE 0 END), 0) AS income,
+       COALESCE(SUM(CASE WHEN kind = 'expense' THEN amount_cents ELSE 0 END), 0) AS expense
+     FROM transactions
+     WHERE deleted = 0 AND off_budget = 0 AND substr(date, 1, 7) = ?
+       AND recurrence_id IS NOT NULL AND installment_id IS NULL`,
+    [month]
+  );
+  let recIncome = recTx.income;
+  let recExpense = recTx.expense;
+  for (const r of getRecurrencesForMonth(month).filter((r) => r.in_month && !r.transaction)) {
+    if (r.kind === 'income') recIncome += r.amount_cents;
+    else recExpense += r.amount_cents;
   }
 
   // Lançamentos manuais (nem conta fixa, nem parcela).

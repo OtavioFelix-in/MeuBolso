@@ -49,7 +49,8 @@ export function getRecurrencesForMonth(month, kind = null) {
       due_date: tx?.date ?? dueDateFor(month, rec.due_day),
       month_amount_cents: tx?.amount_cents ?? rec.amount_cents,
       is_paid: tx ? tx.paid === 1 : false,
-      in_month: isActiveInMonth(rec, month),
+      in_month: isActiveInMonth(rec, month) && fallsInMonth(rec, month),
+      off_period: isActiveInMonth(rec, month) && !fallsInMonth(rec, month),
     };
   });
 }
@@ -59,6 +60,11 @@ function isActiveInMonth(rec, month) {
   if (rec.start_month && rec.start_month > month) return false;
   if (rec.end_month && rec.end_month < month) return false;
   return true;
+}
+
+function fallsInMonth(rec, month) {
+  if (rec.period !== 'annual') return true;
+  return month.slice(5, 7) === (rec.start_month ?? month).slice(5, 7);
 }
 
 export function saveRecurrence({
@@ -136,10 +142,7 @@ export function materializeMonthTx(month) {
   const created = [];
   for (const rec of recs) {
     // Recorrência anual só cai no mesmo mês do ano em que começou.
-    if (rec.period === 'annual') {
-      const annualMonth = (rec.start_month ?? month).slice(5, 7);
-      if (month.slice(5, 7) !== annualMonth) continue;
-    }
+    if (!fallsInMonth(rec, month)) continue;
 
     const exists = db.getFirstSync(
       `SELECT id FROM transactions
