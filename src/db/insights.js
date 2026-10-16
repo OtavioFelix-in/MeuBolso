@@ -32,7 +32,7 @@ export function getCategoryAverages(month, lookback = 3) {
      LEFT JOIN categories p ON p.id = c.parent_id
      WHERE t.deleted = 0 AND t.off_budget = 0 AND t.kind = 'expense'
        AND substr(t.date, 1, 7) >= ? AND substr(t.date, 1, 7) <= ?
-     GROUP BY category_id`,
+     GROUP BY COALESCE(p.id, c.id)`,
     [prior[0].month, prior[prior.length - 1].month]
   );
 
@@ -87,7 +87,7 @@ export function getAnomalies(month, lookback = 3) {
      LEFT JOIN categories p ON p.id = c.parent_id
      WHERE t.deleted = 0 AND t.off_budget = 0 AND t.kind = 'expense'
        AND substr(t.date, 1, 7) >= ? AND substr(t.date, 1, 7) <= ?
-     GROUP BY category_id`,
+     GROUP BY COALESCE(p.id, c.id)`,
     [prior[0].month, prior[prior.length - 1].month]
   );
   const avgMap = Object.fromEntries(avgPerEntry.map((r) => [r.category_id, r.avg_cents]));

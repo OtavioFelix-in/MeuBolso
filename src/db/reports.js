@@ -8,6 +8,7 @@
 // Ou seja: o que já foi separado sai do "dá pra gastar" mas continua sendo seu.
 
 import { addMonths, lastMonths, monthOf, today } from '../utils/date';
+import { formatMoney } from '../utils/money';
 import { db } from './core';
 
 const sum = (sql, params = []) => db.getFirstSync(sql, params)?.total ?? 0;
@@ -116,7 +117,7 @@ export function getCategoryBreakdown(month, kind = 'expense') {
      LEFT JOIN categories c ON c.id = t.category_id
      LEFT JOIN categories p ON p.id = c.parent_id
      WHERE t.deleted = 0 AND t.off_budget = 0 AND t.kind = ? AND substr(t.date, 1, 7) = ?
-     GROUP BY category_id
+     GROUP BY COALESCE(p.id, c.id)
      ORDER BY total_cents DESC`,
     [kind, month]
   );
@@ -446,7 +447,7 @@ export function getSmartAnswers(month) {
     answer: yearRow.income - yearRow.expense >= 0 ? 'Saldo positivo no ano' : 'Saldo negativo no ano',
     value: Math.abs(yearRow.income - yearRow.expense),
     positive: yearRow.income - yearRow.expense >= 0,
-    detail: `entrou ${(yearRow.income / 100).toFixed(0)} e saiu ${(yearRow.expense / 100).toFixed(0)} reais no ano`,
+    detail: `entrou ${formatMoney(yearRow.income)} e saiu ${formatMoney(yearRow.expense)} no ano`,
   });
 
   const debt = db.getFirstSync(
